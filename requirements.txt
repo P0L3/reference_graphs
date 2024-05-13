@@ -1,0 +1,10 @@
+tqdm==4.66.1
+pandas==2.0.3
+nltk==3.8.1
+transformers==4.39.0
+torch==2.2.1
+
+
+# Extras
+pipdeptree==2.16.1
+matplotlib==3.7.5
