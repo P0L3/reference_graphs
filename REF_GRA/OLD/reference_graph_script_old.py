@@ -33,10 +33,10 @@ def pyvis_show(graf, phi=False, name="Default"):
     net.show("{}_{}.html".format(name, time()))
 
 def networkx_plot(graf, name="Default"):
-    node_sizes = [10*len(graf.edges(n)) for n in graf.nodes()]
+    node_sizes = [50*len(graf.edges(n)) for n in graf.nodes()]
     edges = graf.edges()
     #weights = [graf[u][v]['weight']/100 for u,v in edges]
-    nx.draw_networkx(graf, node_size=node_sizes)
+    nx.draw_networkx(graf, pos=nx.kamada_kawai_layout(graf), node_size=node_sizes)
     plt.show() 
     
 
@@ -45,9 +45,10 @@ import networkx as nx
 
 from semanticscholar import SemanticScholar
 sch = SemanticScholar()
-list_of_paper_ids = DOI_list[0:500]
+list_of_paper_ids = DOI_list[::5]
 results = sch.get_papers(list_of_paper_ids)
-
+print(results[0])
+exit()
 # Create a graph
 G = nx.Graph()
 N = 50

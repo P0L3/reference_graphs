@@ -20,3 +20,8 @@ All analytics on data (without MDPI) are performed with [keyword_graph](REF_GRA/
 2. Filtering of data by mean length of keyword (clean outlayers)
 3. Cooccurance graph construction
 4. Centrality measures: Degree, Eigenvector
+
+### Author graph
+
+
+### TODO

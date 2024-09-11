@@ -1,0 +1,23 @@
+{
+    "paperId": "97eca649571619fcaaf6d4a3268549a8697373da", 
+    "externalIds": {"MAG": "2551961089", "DOI": "10.1016/J.ENPOL.2016.10.044", "CorpusId": 29350411}, 
+    "corpusId": 29350411, 
+    "publicationVenue": "None", 
+    "url": "https:\/\/www.semanticscholar.org/paper/97eca649571619fcaaf6d4a3268549a8697373da", 
+    "title": "Comparing electricity transitions: A historical analysis of nuclear, wind and solar power in Germany and Japan", 
+    "abstract": "None", 
+    "venue": "", 
+    "year": 2017, 
+    "referenceCount": 110, 
+    "citationCount": 147, 
+    "influentialCitationCount": 10, 
+    "isOpenAccess": "True", 
+    "openAccessPdf": "None", 
+    "fieldsOfStudy": ["Engineering"], 
+    "s2FieldsOfStudy": [{"category": "Engineering", "source": "external"}, {"category": "Environmental Science", "source": "s2-fos-model"}, {"category": "History", "source": "s2-fos-model"}, {"category": "Political Science", "source": "s2-fos-model"}], 
+    "publicationTypes": "None", 
+    "publicationDate": "2017-02-01", 
+    "journal": {"name": "Energy Policy", "pages": "612-628", "volume": "101"}, 
+    "citationStyles": {"bibtex": "@Article{Cherp2017ComparingET,\n author = {A. Cherp and Vadim Vinichenko and J. Jewell and Masahiro Suzuki and M. Antal},\n journal = {Energy Policy},\n pages = {612-628},\n title = {Comparing electricity transitions: A historical analysis of nuclear, wind and solar power in Germany and Japan},\n volume = {101},\n year = {2017}\n}\n"}, 
+    "authors": [{"authorId": "7828400", "name": "A. Cherp"}, {"authorId": "144088189", "name": "Vadim Vinichenko"}, {"authorId": "7889710", "name": "J. Jewell"}, {"authorId": "2111453361", "name": "Masahiro Suzuki"}, {"authorId": "50153469", "name": "M. Antal"}]
+}
