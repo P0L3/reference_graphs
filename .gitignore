@@ -8,3 +8,6 @@ REF_GRA/*.graphml
 REF_GRA/*.html
 REF_GRA/RESULTS/
 
+*.csv*
+
+TEMP
