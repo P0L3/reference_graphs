@@ -5,8 +5,9 @@ REF_GRA/GRAPHS/
 # Files in workdirectory
 REF_GRA/*.edgelist
 REF_GRA/*.graphml
-REF_GRA/*.html
 REF_GRA/RESULTS/
+REF_GRA/OLD/*.graphml
+REF_GRA/OLD/*.html
 
 *.csv*
 
