@@ -23,8 +23,8 @@ except FileNotFoundError as e:
     print("Please make sure you have executed the extraction script and have the CSV files in your directory.")
     sys.exit(1)
 
-# Ensure null institutions are marked as Unknown
-df_nodes["institution"] = df_nodes["institution"].fillna("Unknown")
+# Ensure null institutions are marked as External
+df_nodes["institution"] = df_nodes["institution"].fillna("External")
 
 # 1a. Generate Layer 3 (Research Similarity) using Jaccard Similarity
 print("Reconstructing Research Similarity Layer (Jaccard projection)...")
@@ -102,7 +102,7 @@ degree_data = []
 for node in multiplex_graph["co-authorship"].nodes():
     attrs = multiplex_graph["co-authorship"].nodes[node]
     full_name = f"{attrs.get('name', '')} {attrs.get('surname', '')}".strip()
-    row = {"node_id": node, "researcher": full_name, "institution": attrs.get('institution', 'Unknown')}
+    row = {"node_id": node, "researcher": full_name, "institution": attrs.get('institution', 'External')}
     total_multiplex_degree = 0
     for layer_name, G in multiplex_graph.items():
         d = G.out_degree(node) + G.in_degree(node) if G.is_directed() else G.degree(node)
@@ -250,7 +250,7 @@ INST_MARKERS = {
     "FABRI": "*",     # Star (5-point)
     "FZF": "s",       # Square
     "FM": "D",        # Diamond
-    "Unknown": "o"    # Circle (fallback)
+    "External": "o"    # Circle (fallback)
 }
 
 # 5a. Draw Layer Planes (Planes remain distinct, while node colors reflect institution)
@@ -286,13 +286,44 @@ for layer_name, meta in layers_meta.items():
             
     # Draw Nodes (shape-coded dynamically by institution, colored by layer)
     for n in pos_2d.keys():
-        node_inst = G.nodes[n].get('institution', 'Unknown')
-        node_marker = INST_MARKERS.get(node_inst, INST_MARKERS["Unknown"])
-        
-        # We increase the size 's' slightly to 80 so the custom shapes are clearly visible
-        ax.scatter([pos_2d[n][0]], [pos_2d[n][1]], [z], s=80, 
-                   c=color, marker=node_marker, edgecolors='black', 
-                   alpha=0.9, zorder=4, depthshade=True)
+        node_inst = G.nodes[n].get('institution', 'External')
+        node_marker = INST_MARKERS.get(node_inst, INST_MARKERS["External"])
+
+        # --- Opacity logic ---
+        if n == search_name:
+            # Target researcher: always fully visible on every plane
+            node_alpha = 0.95
+            node_size  = 130
+            edge_col   = 'black'
+        elif n in neighbors_of_target:
+            primary_z = neighbor_first_level.get(n)
+            if primary_z == z:
+                # This is the layer where the neighbour first connects → full presence
+                node_alpha = 0.90
+                node_size  = 85
+                edge_col   = 'black'
+            else:
+                # All other layers → ghost marker so spatial position is hinted
+                node_alpha = 0.07
+                node_size  = 55
+                edge_col   = 'none'   # drop the border so it really fades out
+        else:
+            # Background context nodes: unchanged dim styling
+            node_alpha = 0.35
+            node_size  = 80
+            edge_col   = 'black'
+
+        ax.scatter(
+            [pos_2d[n][0]], [pos_2d[n][1]], [z],
+            s=node_size,
+            c=color,
+            marker=node_marker,
+            edgecolors=edge_col,
+            linewidths=0.7,
+            alpha=node_alpha,
+            zorder=4,
+            depthshade=True,
+        )
 
 # 5c. Draw Cross-Layer Couplings & Dynamic Vertical Labels
 for node in pos_2d.keys():
@@ -326,7 +357,7 @@ ax.view_init(elev=22, azim=-55)
 # Legend mapping for Node Institution shapes
 legend_elements = [plt.Line2D([0], [0], marker=marker, color='w', label=inst,
                               markerfacecolor='darkgrey', markersize=10, markeredgecolor='black')
-                   for inst, marker in INST_MARKERS.items() if inst != "Unknown"]
+                   for inst, marker in INST_MARKERS.items()]
 ax.legend(handles=legend_elements, loc='upper right', title="Faculty Affiliation")
 
 plt.title(f"Egocentric Multiplex View: {display_name}", fontsize=16, y=0.96)

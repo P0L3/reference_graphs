@@ -1,0 +1,1233 @@
+===== CODEBASE EXPORT =====
+SOURCE: /home/p0l3/RAD/REFERENCE_GRAPH/REF_GRA
+TOTAL FILES: 5
+GENERATED: 2026-06-25T12:12:32.676299
+===========================
+
+===== FILE INDEX =====
+1. OLD/reference_graph_script_old.py
+2. TEMP/crosbi_coauthorship_institution.py
+3. build_graph_crosbi_data.py
+4. fetch_crosbi_data.py
+5. multiplex_graph_analysis_crosbi_data.py
+======================
+
+===== FILE START =====
+PATH: OLD/reference_graph_script_old.py
+-----
+
+import networkx as nx
+import pandas as pd
+
+# Load dataset
+DIR = "./DATA/enerpol_full.pickle"
+df = pd.read_pickle(DIR)
+
+# Dataset info
+# Filter no references
+
+df = df[df["References"] != "no_references"]
+df = df[df["Authors"] != "no_author"]
+
+df.info()
+
+
+print(df["Authors"].sample(1).tolist()[0])
+for a in df["DOI"].sample(1).tolist()[0]:
+    print(a)
+    
+
+DOI_list = [a[0][1:] for a in df["DOI"].tolist()]
+print(DOI_list)
+
+
+from pyvis.network import Network
+from time import time
+
+def pyvis_show(graf, phi=False, name="Default"):
+    net = Network()
+    net.from_nx(graf)
+    net.toggle_physics(phi)
+    net.show("{}_{}.html".format(name, time()))
+
+def networkx_plot(graf, name="Default"):
+    node_sizes = [50*len(graf.edges(n)) for n in graf.nodes()]
+    edges = graf.edges()
+    #weights = [graf[u][v]['weight']/100 for u,v in edges]
+    nx.draw_networkx(graf, pos=nx.kamada_kawai_layout(graf), node_size=node_sizes)
+    plt.show() 
+    
+
+import matplotlib.pyplot as plt
+import networkx as nx
+
+from semanticscholar import SemanticScholar
+sch = SemanticScholar()
+list_of_paper_ids = DOI_list[::5]
+results = sch.get_papers(list_of_paper_ids)
+print(results[0])
+exit()
+# Create a graph
+G = nx.Graph()
+N = 50
+for k, item in enumerate(results):
+    
+
+    authors = [author['name'] for author in item.authors]
+
+    for i, author1 in enumerate(authors):
+        for j, author2 in enumerate(authors):
+            if i != j:
+                G.add_edge(author1, author2)
+                
+    if k > N:
+        break
+# Plot the graph
+networkx_plot(G)
+
+===== FILE END =====
+
+===== FILE START =====
+PATH: TEMP/crosbi_coauthorship_institution.py
+-----
+
+#!/usr/bin/env python
+# coding: utf-8
+
+# Environment
+# 
+# ```shell
+# 
+# conda create -n refgra python=3.10
+# 
+# conda activate refgra
+# 
+# conda install pandas networkx matplotlib pyvis ipykernel requests tqdm -y
+# ```
+
+# ## Libraries
+
+# In[3]:
+
+
+import requests
+import pandas as pd
+from tqdm import tqdm
+import networkx as nx
+
+from matplotlib import pyplot as plt
+from time import time
+
+from pyvis.network import Network
+
+import re
+
+from copy import deepcopy
+
+
+# ### Helper functions
+
+# In[4]:
+
+
+# Helper functions
+
+def pyvis_show_c(graf, phi=False, name="Default"):
+    net = Network()
+    net.from_nx(graf)
+    net.toggle_physics(phi)
+
+    # Normalize weights to control alpha transparency
+    weights = [data.get("weight", 1) for _, _, data in graf.edges(data=True)]
+    min_w, max_w = min(weights), max(weights)
+    range_w = max_w - min_w if max_w != min_w else 1
+
+    for u, v, data in graf.edges(data=True):
+        weight = data.get("weight", 1)
+        # Normalize weight to 0–1
+        normalized = (weight - min_w) / range_w
+        # Map to alpha: low weight = more transparent, high weight = more opaque
+        alpha = 0.2 + 0.8 * normalized  # Keep a minimum alpha to prevent invisibility
+        alpha = min(max(alpha, 0.2), 1.0)
+
+        rgba_color = f"rgba(0,0,0,{alpha:.2f})"
+        data["color"] = rgba_color  # Set the edge color in the original graph
+
+    net.from_nx(graf)  # Re-import the modified graph with edge colors
+    net.show(f"{name}_{int(time())}.html", notebook=False)
+
+    
+
+
+def networkx_plot(graf, name="Default"):
+    node_sizes = [50*len(graf.edges(n)) for n in graf.nodes()]
+    edges = graf.edges()
+    #weights = [graf[u][v]['weight']/100 for u,v in edges]
+    nx.draw_networkx(graf, pos=nx.kamada_kawai_layout(graf), node_size=node_sizes)
+    plt.show() 
+    
+def authorstringlist2dict(stringlist):
+    """
+    Converts a string of authors (formatted as 'surname, name', separated by semicolons) 
+    into a list of dictionaries with 'name', 'surname', 'authorId', and 'role'.
+
+    Args:
+        stringlist (str): Authors in the format 'surname, name', separated by ';'.
+
+    Returns:
+        list: List of dictionaries, each containing author details.
+    """
+    authorlist = []
+    if ";" in stringlist:
+        for author in stringlist.split(";"):
+            authorlist.append({"name": author.split(",")[1], "surname": author.split(",")[0], "authorId": author.replace(",", "").replace(" ", ""), "role": {'id': 905, 'naziv': 'autor/i'}})
+    else:
+        for author in [stringlist]:
+            try:
+                authorlist.append({"name": author.split(",")[1], "surname": author.split(",")[0], "authorId": author.replace(",", "").replace(" ", ""), "role": {'id': 905, 'naziv': 'autor/i'}})
+            except IndexError:
+                authorlist.append({"name": author.split(" ")[1], "surname": author.split(" ")[0], "authorId": author.replace(",", "").replace(" ", ""), "role": {'id': 905, 'naziv': 'autor/i'}})
+        
+    return authorlist
+
+def process_authors(authors):
+    """
+    Processes a list of authors by removing duplicates based on name and surname similarity.
+    Authors are listed first, followed by supervisors (role ID 907).
+
+    Args:
+        authors (list): A list of dictionaries, each containing 'name', 'surname', 'authorId', and 'role' info.
+
+    Returns:
+        list: A list of unique authors with supervisors appended at the end.
+    """
+    # Deep copy of the list to avoid modifying the original input
+    result_d = deepcopy(authors)
+    
+    # Remove duplicates by comparing names and surnames
+    for i, author1 in enumerate(authors):
+        for author2 in authors[i+1:]:
+            if author1["name"].strip().lower() == author2["name"].strip().lower() and isinstance(author2["authorId"], str):
+                surname1 = re.split(r"[ -]", author1["surname"])
+                surname2 = re.split(r"[ -]", author2["surname"])
+                
+                if bool(set(surname1) & set(surname2)):  # Check if surnames overlap
+                    result_d.remove(author2)
+                    continue
+    
+    # Separate authors and supervisors
+    authors_final = []
+    supervisers = []
+
+    for author in result_d:
+        if author["role"]["id"] == 907:  # If the role is supervisor
+            supervisers.append(author)
+        else:  # If the role is author
+            authors_final.append(author)
+    
+    # Append supervisors to the end of the authors list
+    authors_final.extend(supervisers)
+    
+    return authors_final
+
+
+# ## Data gathering from Croris API
+
+# In[5]:
+
+
+# Step 1: Get the list of publications for the institution
+institution_url = "https://www.croris.hr/crosbi-api/ustanova/289"
+
+# Fetch the list of publications
+response = requests.get(institution_url)
+if response.status_code == 200:
+    data = response.json()
+    publications = data['_links']['publikacije']  # Get the list of publications
+else:
+    print(f"Error fetching data from {institution_url}. Status code: {response.status_code}")
+
+data_list = []
+# Step 2: Loop through each publication and fetch details
+for publication in tqdm(publications):
+    publication_url = publication['href']  # URL for each publication
+    pub_response = requests.get(publication_url)
+    
+    # print(pub_response.json())
+    
+    if pub_response.status_code == 200:
+        pub_data = pub_response.json()
+        # Process each publication (e.g., get the authors)
+        # print(f"Title: {pub_data.get('naslov')}")
+        title = pub_data.get('naslov')
+        authors = []
+        if 'osobeResources' in pub_data:
+            superviser_flag = False
+            for author in pub_data['osobeResources']['_embedded']['osobe']:
+                if author['funkcija']['id'] in [905, 907]:
+                    if author['funkcija']['id'] == 907:
+                        superviser_flag = True
+                    # print(f" - {author['ime']} {author['prezime']} {author['crorisId']}")
+                    authors.append({"name": author['ime'], "surname": author['prezime'], "authorId": author['crorisId'], "role": author['funkcija']})
+                    
+        else:
+            print("No authors found")
+        
+        # Add authors with no ID in the database (students)
+        if superviser_flag:
+            authors.extend(authorstringlist2dict(pub_data.get('autori')))
+        
+        if len(authors) < 1:
+            authors.append("no_authors")
+            
+        year = pub_data.get('godina')
+        DOI = pub_data.get('crosbiId')
+        
+        if not "no_authors" in authors:
+            authors = process_authors(authors)
+        
+        paper_data = {
+            "Title": title,
+            "DOI": DOI,
+            "Authors": authors
+        }
+        
+        data_list.append(paper_data)
+        
+    else:
+        print(f"Error fetching data from {publication_url}. Status code: {pub_response.status_code}")
+        
+df = pd.DataFrame(data_list)
+
+
+# ### Data info
+
+# In[15]:
+
+
+df[df["Authors"].apply(lambda x: x != ["no_authors"])]
+
+
+# In[6]:
+
+
+print(df.info())
+# Calculate the percentage of rows where the "Authors" column contains the list ["no_authors"]
+percentage = len(df[df["Authors"].apply(lambda x: x == ["no_authors"])]) / len(df) * 100
+
+# Print the percentage
+print(f"\nPercentage of papers with no aparent authors: {percentage:.2f} %\n")
+print(df[df["Authors"].apply(lambda x: x == ["no_authors"])])
+
+
+# ### Data export
+
+# In[7]:
+
+
+df.to_csv(f"./DATA/crosbi_data_{len(df)}_2.csv")
+df.to_pickle(f"./DATA/crosbi_data_{len(df)}_2.pickle")
+
+
+# ## Data loading
+
+# In[8]:
+
+
+DIR = "./DATA/crosbi_data_1215_2.pickle"
+
+df = pd.read_pickle(DIR)
+
+
+# In[9]:
+
+
+# Create a graph
+G = nx.Graph()
+N = 1200
+for k, item in enumerate(df.iterrows()):
+    if item[1]["Authors"][0] == "no_authors":
+        continue
+    
+    print(item[1]["Authors"][0]['authorId'])
+    
+
+    authors = [(author['authorId'], author['name'] + " " + author['surname']) for author in item[1]["Authors"]]
+    print(authors)
+    
+    for i, author1 in enumerate(authors):
+        for j, author2 in enumerate(authors):
+            if i != j:
+                G.add_node(author1[0], label=author1[1])
+                G.add_node(author2[0], label=author2[1])
+                
+                if G.has_edge(author1[0], author2[0]):
+                    G[author1[0]][author2[0]]['weight'] += 1
+                elif G.has_edge(author2[0], author1[0]):
+                    G[author2[0]][author1[0]]['weight'] += 1
+                else:
+                    G.add_edge(author1[0], author2[0], weight=1)    
+    if k > N:
+        break
+# Plot the graph
+pyvis_show_c(G, phi=True, name="author_reference_graph")
+
+
+# In[11]:
+
+
+nx.write_graphml(G, "author_reference_graph_crosbi_240626.graphml")
+
+
+===== FILE END =====
+
+===== FILE START =====
+PATH: build_graph_crosbi_data.py
+-----
+
+import pandas as pd
+import networkx as nx
+import itertools
+from tqdm import tqdm
+import os
+from datetime import datetime
+
+# Load the multi-institutional data files
+df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv")
+df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv")
+df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv")
+
+# Ensure null institutions are marked as Unknown
+df_nodes["institution"] = df_nodes["institution"].fillna("Unknown")
+
+# ==========================================
+# 5. GENERATE LAYER 3 (RESEARCH SIMILARITY) - JACCARD VERSION
+# ==========================================
+print("\nGenerating Research Similarity Edges (Layer 3)...")
+
+# 1. Create a dictionary mapping Node -> Set of unique keywords they have used
+node_keywords = df_keywords.groupby('node_id')['keyword'].apply(set).to_dict()
+
+# 2. Define your significance threshold (e.g., 0.025 means they must share 2.5% of their total keywords)
+SIMILARITY_THRESHOLD = 0.025
+
+similarity_edges = []
+nodes_with_keywords = list(node_keywords.keys())
+
+# 3. Compare every pair of researchers (O(N^2))
+for u, v in tqdm(itertools.combinations(nodes_with_keywords, 2), desc="Comparing keywords", total=len(nodes_with_keywords)*(len(nodes_with_keywords)-1)//2):
+    set_u = node_keywords[u]
+    set_v = node_keywords[v]
+    
+    intersection = set_u.intersection(set_v)
+    if not intersection:
+        continue
+        
+    union = set_u.union(set_v)
+    
+    # Calculate Jaccard Similarity
+    jaccard_index = len(intersection) / len(union)
+    
+    # Only create an edge if it passes the threshold
+    if jaccard_index >= SIMILARITY_THRESHOLD:
+        similarity_edges.append({
+            "source": u,
+            "target": v,
+            "layer": "similarity",
+            "weight": jaccard_index, # Weight is now the similarity score 0.0 - 1.0
+            "year_start": 0,
+            "year_end": 2026,
+            "context": f"shared_{len(intersection)}_keywords"
+        })
+
+df_similarity = pd.DataFrame(similarity_edges)
+print(f"Created {len(df_similarity)} significant similarity edges (Threshold: {SIMILARITY_THRESHOLD})")
+
+# Combine raw edges with generated similarity edges
+df_all_edges = pd.concat([df_edges, df_similarity], ignore_index=True)
+
+# ==========================================
+# 6. AGGREGATE WEIGHTS & BUILD MULTIPLEX GRAPH
+# ==========================================
+print("\nAggregating edges and building Multiplex Graph...")
+
+# Define our 4 layers. We use DiGraph for Mentorship to keep direction (Mentor -> Student).
+# The others are undirected.
+multiplex_graph = {
+    "co-authorship": nx.Graph(),
+    "mentorship": nx.DiGraph(),
+    "similarity": nx.Graph(),
+    "project": nx.Graph()
+}
+
+# Add all nodes to all layers with attributes (including dynamic institution!)
+for _, node_row in df_nodes.iterrows():
+    node_id = node_row['node_id']
+    attrs = {
+        "name": node_row['name'], 
+        "surname": node_row['surname'],
+        "institution": node_row['institution'] # <--- Added dynamic institution tracking
+    }
+    for layer_name in multiplex_graph.keys():
+        multiplex_graph[layer_name].add_node(node_id, **attrs)
+
+# To analyze the STATIC graph (across all time), we group the edges and sum the weights
+# We use .sum() on "weight" to ensure similarity edges keep their decimal Jaccard values,
+# while co-authorship and projects sum up their occurrences.
+static_edges = df_all_edges.groupby(['source', 'target', 'layer'])['weight'].sum().reset_index()
+
+# Add edges to the respective NetworkX graphs
+for _, edge in static_edges.iterrows():
+    u = edge['source']
+    v = edge['target']
+    layer = edge['layer']
+    w = edge['weight']
+    
+    # For undirected graphs, we need to avoid A->B and B->A overwriting each other
+    if not multiplex_graph[layer].is_directed():
+        # If edge already exists, just add to the weight
+        if multiplex_graph[layer].has_edge(u, v):
+            multiplex_graph[layer][u][v]['weight'] += w
+        else:
+            multiplex_graph[layer].add_edge(u, v, weight=w)
+    else:
+        # Directed graph (Mentorship)
+        if multiplex_graph[layer].has_edge(u, v):
+            multiplex_graph[layer][u][v]['weight'] += w
+        else:
+            multiplex_graph[layer].add_edge(u, v, weight=w)
+
+# ==========================================
+# 7. BASIC MULTIPLEX METRICS (PROOF OF CONCEPT)
+# ==========================================
+print("\n--- MULTIPLEX NETWORK STATS ---")
+for layer_name, G in multiplex_graph.items():
+    # Only count isolated nodes to see how "active" a layer is
+    active_nodes = [n for n, d in G.degree() if d > 0]
+    print(f"Layer: {layer_name.upper()}")
+    print(f"  Total Nodes: {G.number_of_nodes()} (Active: {len(active_nodes)})")
+    print(f"  Total Edges: {G.number_of_edges()}")
+    
+    # Calculate density (ignoring isolated nodes for a fairer metric)
+    if len(active_nodes) > 1:
+        subgraph = G.subgraph(active_nodes)
+        print(f"  Density of active network: {nx.density(subgraph):.4f}\n")
+    else:
+        print("  Density: 0.0\n")
+
+# Show Node Distribution by Institution for confirmation
+print("--- NODE DISTRIBUTION BY INSTITUTION ---")
+print(df_nodes["institution"].value_counts().to_string())
+
+
+# Create output folder
+output_dir = "exported_graphs"
+os.makedirs(output_dir, exist_ok=True)
+
+# Timestamp format: hour-minute-date
+timestamp = datetime.now().strftime("%H-%M-%d-%m-%Y")
+
+# Export each layer separately
+for layer_name, G in multiplex_graph.items():
+
+    # Sanitize filename
+    safe_name = layer_name.replace(" ", "_").replace("-", "_")
+
+    # GraphML (recommended for Gephi, Cytoscape, NetworkX)
+    graphml_path = os.path.join(
+        output_dir,
+        f"{safe_name}_{timestamp}.graphml"
+    )
+    nx.write_graphml(G, graphml_path)
+
+    # Optional: GEXF (also works well with Gephi)
+    gexf_path = os.path.join(
+        output_dir,
+        f"{safe_name}_{timestamp}.gexf"
+    )
+    nx.write_gexf(G, gexf_path)
+
+    print(f"Saved {layer_name}:")
+    print(f"  {graphml_path}")
+    print(f"  {gexf_path}")
+
+===== FILE END =====
+
+===== FILE START =====
+PATH: fetch_crosbi_data.py
+-----
+
+import requests
+import pandas as pd
+import re
+from tqdm import tqdm
+import networkx as nx
+import os
+from datetime import datetime
+
+# ==========================================
+# 1. SETUP: NODE REGISTRY & DATA TABLES
+# ==========================================
+nodes_registry = {}
+edges_table = []
+keywords_table = []
+
+# Define the institutions you want to analyze
+institutions = [
+    {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
+    {"name": "FABRI", "crosbi_id": 303, "mbu": 335},
+    {"name": "FZF",   "crosbi_id": 288, "mbu": 316},
+    {"name": "FM",    "crosbi_id": 290, "mbu": 319},
+]
+
+# Central Map to translate CroRIS IDs and MBUs to acronyms
+ID_TO_ACRONYM = {
+    # CROSBI Institution IDs
+    289: "FIDIT",
+    303: "FABRI",
+    288: "FZF",
+    290: "FM",
+    # MBU IDs (Projects API)
+    318: "FIDIT",
+    335: "FABRI",
+    316: "FZF",
+    319: "FM"
+}
+
+def get_or_create_node(ime, prezime, croris_id=None, pers_id=None):
+    """
+    Solves Entity Resolution and initializes voting and resolution metadata.
+    """
+    ime = str(ime).strip()
+    prezime = str(prezime).strip()
+    # Create a synthetic ID (e.g., "pavlić_mile")
+    synth_id = f"{prezime.lower()}_{ime.lower()}"
+    
+    if synth_id not in nodes_registry:
+        nodes_registry[synth_id] = {
+            "node_id": synth_id,
+            "name": ime,
+            "surname": prezime,
+            "croris_id": croris_id,
+            "pers_id": pers_id,
+            # Resolution meta fields (removed before saving to CSV)
+            "project_institution": None,
+            "publication_votes": {},
+            "external_institution_name": None
+        }
+    else:
+        # Update IDs if we discover them later in different APIs
+        if croris_id: 
+            nodes_registry[synth_id]["croris_id"] = croris_id
+        if pers_id: 
+            nodes_registry[synth_id]["pers_id"] = pers_id
+        
+    return synth_id
+
+# Sets to keep track of processed data to prevent duplication
+processed_pubs = set()
+processed_projects = set()
+
+# ==========================================
+# 2. EXTRACT LAYERS 1, 2, & 3 (CROSBI API)
+# ==========================================
+print("Fetching Publications from CROSBI...")
+
+for inst in institutions:
+    institution_url = f"https://www.croris.hr/crosbi-api/ustanova/{inst['crosbi_id']}"
+    response = requests.get(institution_url)
+
+    if response.status_code == 200:
+        publications = response.json().get('_links', {}).get('publikacije', [])
+    else:
+        publications = []
+        print(f"Error fetching publications list for {inst['name']}.")
+
+    # Iterate through publications
+    for pub in tqdm(publications, desc=f"Pubs {inst['name']}"):
+        pub_url = pub['href']
+        
+        if pub_url in processed_pubs:
+            continue
+        processed_pubs.add(pub_url)
+        
+        pub_resp = requests.get(pub_url)
+        
+        if pub_resp.status_code == 200:
+            pub_data = pub_resp.json()
+            pub_id = pub_data.get('crosbiId', 'unknown')
+            
+            try:
+                year = int(pub_data.get('godina', 0))
+            except ValueError:
+                year = 0
+                
+            # Skip Co-authorship generation if it is a student's thesis (ocjenski rad)
+            is_thesis = "ocjenski" in str(pub_data.get('vrsta', '')).lower()
+            
+            authors = []
+            supervisors = []
+            
+            # 2a. Parse People (Authors & Mentors)
+            if 'osobeResources' in pub_data and '_embedded' in pub_data['osobeResources']:
+                for osoba in pub_data['osobeResources']['_embedded'].get('osobe', []):
+                    role_id = osoba.get('funkcija', {}).get('id')
+                    croris_id = osoba.get('crorisId')
+                    
+                    # Register the node
+                    node_id = get_or_create_node(osoba.get('ime', ''), osoba.get('prezime', ''), croris_id=croris_id)
+                    
+                    # Log a vote for this queried institution (Solution 1)
+                    votes = nodes_registry[node_id]["publication_votes"]
+                    votes[inst['name']] = votes.get(inst['name'], 0) + 1
+                    
+                    if role_id == 905: # Author
+                        authors.append(node_id)
+                    elif role_id == 907: # Supervisor/Mentor
+                        supervisors.append(node_id)
+                        if not is_thesis:
+                            authors.append(node_id)
+            
+            # 2b. Build Layer 1: Co-authorship Edges
+            for i in range(len(authors)):
+                for j in range(i + 1, len(authors)):
+                    edges_table.append({
+                        "source": authors[i],
+                        "target": authors[j],
+                        "layer": "co-authorship",
+                        "weight": 1,
+                        "year_start": year,
+                        "year_end": year,
+                        "context": f"pub_{pub_id}"
+                    })
+                    
+            # 2c. Build Layer 2: Mentorship Edges (Directed)
+            for sup in supervisors:
+                for auth in authors:
+                    if sup != auth:
+                        edges_table.append({
+                            "source": sup,
+                            "target": auth,
+                            "layer": "mentorship",
+                            "weight": 1,
+                            "year_start": year,
+                            "year_end": year,
+                            "context": f"pub_{pub_id}"
+                        })
+                        
+            # 2d. Build Layer 3: Keyword Associations
+            if 'kljucneRijeci' in pub_data:
+                for kr in pub_data['kljucneRijeci']:
+                    naziv = kr.get('naziv', '')
+                    kw_list = [k.strip().lower() for k in re.split(r'[;,]', naziv) if k.strip()]
+                    
+                    for kw in kw_list:
+                        for auth in authors:
+                            keywords_table.append({
+                                "node_id": auth,
+                                "keyword": kw,
+                                "year": year,
+                                "context": f"pub_{pub_id}"
+                            })
+
+# ==========================================
+# 3. EXTRACT LAYER 4 (PROJEKTI API)
+# ==========================================
+print("\nFetching Projects from CRORIS...")
+
+for inst in institutions:
+    projects_url = f"https://www.croris.hr/projekti-api/projekt/ustanova/{inst['mbu']}"
+    proj_resp = requests.get(projects_url)
+
+    if proj_resp.status_code == 200:
+        projects_data = proj_resp.json().get('_embedded', {}).get('projekti', [])
+    else:
+        projects_data = []
+        print(f"Error fetching projects for {inst['name']}.")
+
+    for proj in tqdm(projects_data, desc=f"Proj {inst['name']}"):
+        proj_id = proj.get('id', 'unknown')
+        
+        if proj_id in processed_projects:
+            continue
+        processed_projects.add(proj_id)
+        
+        try:
+            start_year = int(proj.get('pocetak', '').split('.')[-1])
+        except (ValueError, AttributeError):
+            start_year = 0
+            
+        try:
+            end_year = int(proj.get('kraj', '').split('.')[-1])
+        except (ValueError, AttributeError):
+            end_year = 2026
+            
+        team_members = []
+        
+        # Extract People on the project
+        if 'osobeResources' in proj and '_embedded' in proj['osobeResources']:
+            for osoba in proj['osobeResources']['_embedded'].get('osobe', []):
+                pers_id = osoba.get('persId')
+                osoba_ust_id = osoba.get('ustanovaId')
+                osoba_ust_name = osoba.get('ustanovaNaziv', 'External')
+                
+                # Register node
+                node_id = get_or_create_node(osoba.get('ime', ''), osoba.get('prezime', ''), pers_id=pers_id)
+                team_members.append(node_id)
+                
+                # Resolve primary institution (Solution 2 - High Trust Projects Metadata) [1]
+                resolved_inst = ID_TO_ACRONYM.get(osoba_ust_id)
+                if resolved_inst:
+                    # Lock in their core target institution affiliation [1]
+                    nodes_registry[node_id]["project_institution"] = resolved_inst
+                else:
+                    # Mark them as External and capture their actual faculty name (Solution 3) [1]
+                    nodes_registry[node_id]["project_institution"] = "External"
+                    nodes_registry[node_id]["external_institution_name"] = osoba_ust_name
+                
+        # Build Layer 4: Project Co-participation
+        for i in range(len(team_members)):
+            for j in range(i + 1, len(team_members)):
+                edges_table.append({
+                    "source": team_members[i],
+                    "target": team_members[j],
+                    "layer": "project",
+                    "weight": 1,
+                    "year_start": start_year,
+                    "year_end": end_year,
+                    "context": f"proj_{proj_id}"
+                })
+
+# ==========================================
+# 4. EXPORT TO PANDAS DATAFRAMES & DYNAMIC AFFILIATION RESOLUTION
+# ==========================================
+print("\nResolving dynamic institutional affiliations (Tiered Strategy)...")
+
+# Process final institution metadata using our hierarchy rule [1]
+for node_id, data in nodes_registry.items():
+    # Rule 1: Project metadata is absolute truth (includes explicit External labeling) [1]
+    if data["project_institution"] is not None:
+        data["institution"] = data["project_institution"]
+        if data["institution"] == "External" and data["external_institution_name"]:
+            # We can optionally keep the detailed name in a secondary field for researchers to analyze
+            data["ext_affiliation"] = data["external_institution_name"]
+            
+    # Rule 2: Fallback to majority voting on publications queries [1]
+    elif data["publication_votes"]:
+        # Assign the queried institution they appeared in most frequently [1]
+        best_inst = max(data["publication_votes"], key=data["publication_votes"].get)
+        data["institution"] = best_inst
+        
+    # Rule 3: No programmatic overlap - Mark as External
+    else:
+        data["institution"] = "External"
+        
+    # Clean up voting helper variables so they are omitted from CSV
+    del data["publication_votes"]
+    del data["project_institution"]
+    del data["external_institution_name"]
+
+# Construct DataFrames
+df_nodes = pd.DataFrame(list(nodes_registry.values()))
+df_edges = pd.DataFrame(edges_table)
+df_keywords = pd.DataFrame(keywords_table)
+
+inst_suffix = "_".join([inst['name'] for inst in institutions])
+
+print("\n" + "="*42)
+print("  EXTRACTION COMPLETE & DISAMBIGUATED")
+print("="*42)
+print(f"Institutions analyzed: {', '.join([inst['name'] for inst in institutions])}")
+print(f"Total Unique Nodes (Researchers): {len(df_nodes)}")
+print(f"Total Edge Records: {len(df_edges)}")
+print(f"Total Keyword Associations: {len(df_keywords)}")
+
+# Define filenames
+nodes_file = f"nodes_{inst_suffix}.csv"
+edges_file = f"edges_{inst_suffix}.csv"
+keywords_file = f"keywords_{inst_suffix}.csv"
+
+# Save to CSV
+df_nodes.to_csv(nodes_file, index=False)
+df_edges.to_csv(edges_file, index=False)
+df_keywords.to_csv(keywords_file, index=False)
+
+print(f"\nFiles saved successfully:")
+print(f" - {nodes_file}")
+print(f" - {edges_file}")
+print(f" - {keywords_file}")
+
+===== FILE END =====
+
+===== FILE START =====
+PATH: multiplex_graph_analysis_crosbi_data.py
+-----
+
+import os
+import re
+import sys
+import itertools
+from datetime import datetime
+import pandas as pd
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from tqdm import tqdm
+
+# ==========================================
+# 1. LOAD DATA & RECONSTRUCT MULTIPLEX GRAPH
+# ==========================================
+print("Loading data files...")
+try:
+    df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv")
+    df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv")
+    df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv")
+except FileNotFoundError as e:
+    print(f"Error: {e}")
+    print("Please make sure you have executed the extraction script and have the CSV files in your directory.")
+    sys.exit(1)
+
+# Ensure null institutions are marked as External
+df_nodes["institution"] = df_nodes["institution"].fillna("External")
+
+# 1a. Generate Layer 3 (Research Similarity) using Jaccard Similarity
+print("Reconstructing Research Similarity Layer (Jaccard projection)...")
+node_keywords = df_keywords.groupby('node_id')['keyword'].apply(set).to_dict()
+SIMILARITY_THRESHOLD = 0.025
+similarity_edges = []
+nodes_with_keywords = list(node_keywords.keys())
+
+for u, v in itertools.combinations(nodes_with_keywords, 2):
+    set_u = node_keywords[u]
+    set_v = node_keywords[v]
+    intersection = set_u.intersection(set_v)
+    if not intersection:
+        continue
+    union = set_u.union(set_v)
+    jaccard_index = len(intersection) / len(union)
+    if jaccard_index >= SIMILARITY_THRESHOLD:
+        similarity_edges.append({
+            "source": u,
+            "target": v,
+            "layer": "similarity",
+            "weight": jaccard_index,
+            "year_start": 0,
+            "year_end": 2026,
+            "context": f"shared_{len(intersection)}_keywords"
+        })
+
+df_similarity = pd.DataFrame(similarity_edges)
+df_all_edges = pd.concat([df_edges, df_similarity], ignore_index=True)
+
+# 1b. Assemble Multiplex Graph
+multiplex_graph = {
+    "co-authorship": nx.Graph(),
+    "mentorship":    nx.DiGraph(),
+    "similarity":    nx.Graph(),
+    "project":       nx.Graph()
+}
+
+# Add nodes with metadata
+for _, node_row in df_nodes.iterrows():
+    node_id = node_row['node_id']
+    attrs = {
+        "name": node_row['name'], 
+        "surname": node_row['surname'],
+        "institution": node_row['institution']
+    }
+    for layer_name in multiplex_graph.keys():
+        multiplex_graph[layer_name].add_node(node_id, **attrs)
+
+# Aggregate and apply weights using sum() to preserve Jaccard weights
+static_edges = df_all_edges.groupby(['source', 'target', 'layer'])['weight'].sum().reset_index()
+
+for _, edge in static_edges.iterrows():
+    u, v, layer, w = edge['source'], edge['target'], edge['layer'], edge['weight']
+    if not multiplex_graph[layer].is_directed():
+        if multiplex_graph[layer].has_edge(u, v):
+            multiplex_graph[layer][u][v]['weight'] += w
+        else:
+            multiplex_graph[layer].add_edge(u, v, weight=w)
+    else:
+        if multiplex_graph[layer].has_edge(u, v):
+            multiplex_graph[layer][u][v]['weight'] += w
+        else:
+            multiplex_graph[layer].add_edge(u, v, weight=w)
+
+# ==========================================
+# 2. RUN ORGANIZATIONAL NETWORK ANALYSIS (ONA)
+# ==========================================
+print("\n" + "="*42)
+print("  PHASE C: MULTILAYER NETWORK ANALYSIS")
+print("="*42 + "\n")
+
+# Analysis 1: Multiplex Degree Centrality
+degree_data = []
+for node in multiplex_graph["co-authorship"].nodes():
+    attrs = multiplex_graph["co-authorship"].nodes[node]
+    full_name = f"{attrs.get('name', '')} {attrs.get('surname', '')}".strip()
+    row = {"node_id": node, "researcher": full_name, "institution": attrs.get('institution', 'External')}
+    total_multiplex_degree = 0
+    for layer_name, G in multiplex_graph.items():
+        d = G.out_degree(node) + G.in_degree(node) if G.is_directed() else G.degree(node)
+        row[f"deg_{layer_name}"] = d
+        total_multiplex_degree += d
+    row["multiplex_degree_overlap"] = total_multiplex_degree
+    degree_data.append(row)
+
+df_centrality = pd.DataFrame(degree_data)
+df_centrality = df_centrality[df_centrality["multiplex_degree_overlap"] > 0].sort_values(by="multiplex_degree_overlap", ascending=False)
+
+print("--- TOP 10 RESEARCHERS BY MULTIPLEX DEGREE OVERLAP ---")
+print(df_centrality.head(10)[["researcher", "institution", "multiplex_degree_overlap", "deg_co-authorship", "deg_project"]].to_string(index=False))
+print("\n")
+
+# Analysis 2: Layer Edge Overlap
+def get_undirected_edge_set(G):
+    return set([tuple(sorted((u, v))) for u, v in G.edges()])
+
+edges_coauth = get_undirected_edge_set(multiplex_graph["co-authorship"])
+edges_project = get_undirected_edge_set(multiplex_graph["project"])
+edges_sim = get_undirected_edge_set(multiplex_graph["similarity"])
+
+def calculate_overlap(set_A, set_B, name_A, name_B):
+    intersection = len(set_A.intersection(set_B))
+    union = len(set_A.union(set_B))
+    jaccard = intersection / union if union > 0 else 0
+    print(f"Overlap between '{name_A}' and '{name_B}': {jaccard:.4f} ({intersection} shared edges)")
+
+print("--- LAYER EDGE OVERLAP ---")
+calculate_overlap(edges_coauth, edges_project, "Co-authorship", "Projects")
+calculate_overlap(edges_coauth, edges_sim, "Co-authorship", "Similarity")
+print("\n")
+
+# ==========================================
+# 3. INTERACTIVE CLI INTERFACE
+# ==========================================
+print("="*42)
+print("  PHASE D: INTERACTIVE VISUALIZATION SETUP")
+print("="*42 + "\n")
+
+# 3a. Search Name Selection with Substring Support
+while True:
+    search_query = input("Enter researcher name to highlight (e.g. 'mestrovic', 'andrija'): ").strip()
+    if not search_query:
+        print("Input cannot be empty. Try again.")
+        continue
+    
+    # Sanitize search input to lower ascii-like search
+    query_clean = re.sub(r'[^\w\s]', '', search_query.lower())
+    
+    # Search registry
+    matches = []
+    for _, r in df_nodes.iterrows():
+        node_name_clean = re.sub(r'[^\w\s]', '', f"{r['name']} {r['surname']}".lower())
+        if query_clean in node_name_clean or query_clean in r['node_id'].lower():
+            matches.append(r)
+            
+    if not matches:
+        print("No matching researchers found. Please try another name.")
+    elif len(matches) == 1:
+        search_name = matches[0]['node_id']
+        display_name = f"{matches[0]['name']} {matches[0]['surname']}"
+        print(f"-> Resolved to: {display_name} ({matches[0]['institution']})")
+        break
+    else:
+        print("\nMultiple matches found. Please choose the correct ID:")
+        for idx, match in enumerate(matches):
+            print(f" [{idx}] {match['name']} {match['surname']} ({match['institution']}) -> ID: {match['node_id']}")
+        
+        choice = input("Enter the number of your choice: ").strip()
+        if choice.isdigit() and int(choice) < len(matches):
+            chosen = matches[int(choice)]
+            search_name = chosen['node_id']
+            display_name = f"{chosen['name']} {chosen['surname']}"
+            print(f"-> Resolved to: {display_name} ({chosen['institution']})")
+            break
+        else:
+            print("Invalid selection. Restarting search.")
+
+# 3b. Context Node Selection
+num_nodes_input = input("Enter number of context nodes to display [default 120]: ").strip()
+num_nodes = int(num_nodes_input) if num_nodes_input.isdigit() else 120
+print(f"-> Plotting target researcher, neighbors, and Top {num_nodes} context nodes.")
+
+# ==========================================
+# 4. PREPARE 3D GRAPH DATA
+# ==========================================
+node_to_highlight = search_name
+top_nodes_initial = df_centrality.head(num_nodes)['node_id'].tolist()
+
+priority_layers = ["co-authorship", "mentorship", "project", "similarity"]
+neighbors_of_target = set()
+neighbor_first_level = {}
+
+for layer_name in priority_layers:
+    G = multiplex_graph[layer_name]
+    z_val = {"co-authorship": 4, "mentorship": 3, "project": 2, "similarity": 1}[layer_name]
+    
+    if G.has_node(search_name):
+        current_layer_neighbors = set()
+        if G.is_directed():
+            current_layer_neighbors.update(G.successors(search_name))
+            current_layer_neighbors.update(G.predecessors(search_name))
+        else:
+            current_layer_neighbors.update(G.neighbors(search_name))
+            
+        for n in current_layer_neighbors:
+            neighbors_of_target.add(n)
+            if n not in neighbor_first_level:
+                neighbor_first_level[n] = z_val
+
+nodes_to_include = set(top_nodes_initial)
+nodes_to_include.add(search_name)
+nodes_to_include.update(neighbors_of_target)
+top_nodes = list(nodes_to_include)
+
+G_agg = nx.Graph()
+for layer_name, G in multiplex_graph.items():
+    for u, v in G.edges():
+        if u in top_nodes and v in top_nodes:
+            G_agg.add_edge(u, v)
+
+pos_2d = nx.spring_layout(G_agg, seed=42, k=0.65)
+
+# ==========================================
+# 5. DRAW 3D MATPLOTLIB GRAPH
+# ==========================================
+fig = plt.figure(figsize=(15, 13))
+ax = fig.add_subplot(111, projection='3d')
+
+# Define layer ordering heights and faint colors for the boundaries
+layers_meta = {
+    "co-authorship": {"z": 4, "color": "#0072B2"}, # Blue Plane
+    "mentorship":    {"z": 3, "color": "#CC79A7"}, # Purple Plane
+    "project":       {"z": 2, "color": "#009E73"}, # Green Plane
+    "similarity":    {"z": 1, "color": "#E69F00"}  # Orange Plane
+}
+
+# High-contrast colorblind-safe palette mapping for institutions
+# Vermillion, Sky Blue, Yellowish Green, Charcoal, Grey
+# colorblind-friendly markers for institutional mapping
+INST_MARKERS = {
+    "FIDIT": "^",     # Triangle Up
+    "FABRI": "*",     # Star (5-point)
+    "FZF": "s",       # Square
+    "FM": "D",        # Diamond
+    "External": "o"    # Circle (fallback)
+}
+
+# 5a. Draw Layer Planes (Planes remain distinct, while node colors reflect institution)
+x_vals = [coords[0] for coords in pos_2d.values()]
+y_vals = [coords[1] for coords in pos_2d.values()]
+margin = 0.25
+xx, yy = np.meshgrid(np.linspace(min(x_vals)-margin, max(x_vals)+margin, 2),
+                     np.linspace(min(y_vals)-margin, max(y_vals)+margin, 2))
+
+for layer, meta in layers_meta.items():
+    z = meta["z"]
+    # Faint plane for boundary detection
+    ax.plot_surface(xx, yy, np.full_like(xx, z), alpha=0.06, color='grey', edgecolor='none')
+    ax.text2D(0.02, z/5.0, layer.upper(), transform=ax.transAxes, color=meta["color"], fontsize=12, fontweight='bold')
+
+# 5b. Draw Intra-Layer Edges & Nodes
+for layer_name, meta in layers_meta.items():
+    G = multiplex_graph[layer_name]
+    z = meta["z"]
+    color = meta["color"]
+    
+    # Draw Layer Edges
+    for u, v in G.edges():
+        if u in pos_2d and v in pos_2d:
+            x_edge = [pos_2d[u][0], pos_2d[v][0]]
+            y_edge = [pos_2d[u][1], pos_2d[v][1]]
+            z_edge = [z, z]
+            
+            if u == search_name or v == search_name:
+                ax.plot(x_edge, y_edge, z_edge, color='black', alpha=0.9, linewidth=2.5, zorder=6)
+            else:
+                ax.plot(x_edge, y_edge, z_edge, color=color, alpha=0.3, linewidth=1.0)
+            
+    # Draw Nodes (shape-coded dynamically by institution, colored by layer)
+    for n in pos_2d.keys():
+        node_inst = G.nodes[n].get('institution', 'External')
+        node_marker = INST_MARKERS.get(node_inst, INST_MARKERS["External"])
+
+        # --- Opacity logic ---
+        if n == search_name:
+            # Target researcher: always fully visible on every plane
+            node_alpha = 0.95
+            node_size  = 130
+            edge_col   = 'black'
+        elif n in neighbors_of_target:
+            primary_z = neighbor_first_level.get(n)
+            if primary_z == z:
+                # This is the layer where the neighbour first connects → full presence
+                node_alpha = 0.90
+                node_size  = 85
+                edge_col   = 'black'
+            else:
+                # All other layers → ghost marker so spatial position is hinted
+                node_alpha = 0.07
+                node_size  = 55
+                edge_col   = 'none'   # drop the border so it really fades out
+        else:
+            # Background context nodes: unchanged dim styling
+            node_alpha = 0.35
+            node_size  = 80
+            edge_col   = 'black'
+
+        ax.scatter(
+            [pos_2d[n][0]], [pos_2d[n][1]], [z],
+            s=node_size,
+            c=color,
+            marker=node_marker,
+            edgecolors=edge_col,
+            linewidths=0.7,
+            alpha=node_alpha,
+            zorder=4,
+            depthshade=True,
+        )
+
+# 5c. Draw Cross-Layer Couplings & Dynamic Vertical Labels
+for node in pos_2d.keys():
+    x, y = pos_2d[node]
+    z_min, z_max = 1, 4  
+    
+    attrs = multiplex_graph['co-authorship'].nodes.get(node, {})
+    name_display = f"{attrs.get('name', '')} {attrs.get('surname', '')}".strip()
+    if not name_display: name_display = node
+    
+    if node == node_to_highlight:
+        # Main Node: Floats above topmost plane
+        ax.plot([x, x], [y, y], [z_min, z_max], color='black', linestyle='--', linewidth=3, zorder=10)
+        ax.text(x, y, z_max + 0.3, name_display, color='black', fontsize=13, fontweight='bold', ha='center', zorder=12)
+        
+    elif node in neighbors_of_target:
+        # Neighbor Nodes: Float at the level of their highest-priority direct interaction
+        z_connected = neighbor_first_level.get(node, 1)
+        ax.plot([x, x], [y, y], [z_min, z_max], color='dimgrey', linestyle='--', linewidth=1.2, alpha=0.6, zorder=9)
+        ax.text(x, y, z_connected + 0.12, name_display, color='black', fontsize=9, fontweight='semibold', ha='center', alpha=0.8, zorder=11)
+        
+    else:
+        # Background Nodes: Faint coupling line, no text label
+        ax.plot([x, x], [y, y], [z_min, z_max], color='grey', linestyle=':', alpha=0.15, linewidth=1)
+
+# 5d. Display adjustments
+ax.set_zlim(0.5, 5.0) 
+ax.set_axis_off() 
+ax.view_init(elev=22, azim=-55) 
+
+# Legend mapping for Node Institution shapes
+legend_elements = [plt.Line2D([0], [0], marker=marker, color='w', label=inst,
+                              markerfacecolor='darkgrey', markersize=10, markeredgecolor='black')
+                   for inst, marker in INST_MARKERS.items()]
+ax.legend(handles=legend_elements, loc='upper right', title="Faculty Affiliation")
+
+plt.title(f"Egocentric Multiplex View: {display_name}", fontsize=16, y=0.96)
+plt.tight_layout()
+plt.show()
+
+===== FILE END =====
+
