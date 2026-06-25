@@ -13,3 +13,5 @@ REF_GRA/OLD/*.html
 
 TEMP
 exported_graphs
+
+*.pyc
