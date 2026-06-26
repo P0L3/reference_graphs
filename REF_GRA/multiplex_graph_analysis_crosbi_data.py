@@ -15,9 +15,9 @@ from tqdm import tqdm
 # ==========================================
 print("Loading data files...")
 try:
-    df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv")
-    df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv")
-    df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv")
+    df_nodes = pd.read_csv("nodes_FIDIT.csv") # nodes_FIDIT_FABRI_FZF_FM
+    df_edges = pd.read_csv("edges_FIDIT.csv") # edges_FIDIT_FABRI_FZF_FM
+    df_keywords = pd.read_csv("keywords_FIDIT.csv") # keywords_FIDIT_FABRI_FZF_FM
 except FileNotFoundError as e:
     print(f"Error: {e}")
     print("Please make sure you have executed the extraction script and have the CSV files in your directory.")

@@ -6,9 +6,10 @@ import os
 from datetime import datetime
 
 # Load the multi-institutional data files
-df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv")
-df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv")
-df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv")
+
+df_nodes = pd.read_csv("nodes_FIDIT.csv")# ("nodes_FIDIT_FABRI_FZF_FM.csv")
+df_edges = pd.read_csv("edges_FIDIT.csv")# ("edges_FIDIT_FABRI_FZF_FM.csv")
+df_keywords = pd.read_csv("keywords_FIDIT.csv")# ("keywords_FIDIT_FABRI_FZF_FM.csv")
 
 # Ensure null institutions are marked as Unknown
 df_nodes["institution"] = df_nodes["institution"].fillna("Unknown")
