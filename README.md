@@ -68,7 +68,8 @@ REF_GRA/
 ```shell
 conda create -n refgra python=3.10
 conda activate refgra
-conda install pandas networkx matplotlib pyvis ipykernel requests tqdm nbconvert scipy scikit-learn seaborn -y
+conda install pandas networkx matplotlib pyvis ipykernel requests tqdm nbconvert scipy scikit-learn seaborn pymnet -y
+# python -m pip install pymnet
 ```
 
 ---
@@ -192,3 +193,6 @@ Scans the network for researcher pairs who share a high thematic keyword similar
 | CroRIS | `https://www.croris.hr/projekti-api/` | Funded projects & team members |
 
 Both APIs are public and unauthenticated. Rate-limit your requests if running against a large institution.
+
+## ToDo
+- [ ] Migration to [pymnet](https://github.com/mnets/pymnet) with a [implementation guide](REF_GRA/pymnet_migration_guide.md).

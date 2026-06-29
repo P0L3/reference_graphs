@@ -16,3 +16,5 @@ TEMP
 exported_graphs
 
 *.pyc
+
+codebase.txt
