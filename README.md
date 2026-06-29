@@ -68,7 +68,7 @@ REF_GRA/
 ```shell
 conda create -n refgra python=3.10
 conda activate refgra
-conda install pandas networkx matplotlib pyvis ipykernel requests tqdm nbconvert scipy scikit-learn -y
+conda install pandas networkx matplotlib pyvis ipykernel requests tqdm nbconvert scipy scikit-learn seaborn -y
 ```
 
 ---
