@@ -10,14 +10,22 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from tqdm import tqdm
 
+
+plt.rcParams.update({
+    # 'font.size': 12, 'axes.labelsize': 14, 'axes.titlesize': 15,
+    # 'legend.fontsize': 11, 'xtick.labelsize': 11, 'ytick.labelsize': 11,
+    # 'figure.dpi': 300, 'savefig.dpi': 300, 
+    'font.family': 'serif'
+})
+
 # ==========================================
 # 1. LOAD DATA & RECONSTRUCT MULTIPLEX GRAPH
 # ==========================================
 print("Loading data files...")
 try:
-    df_nodes = pd.read_csv("nodes_FIDIT.csv") # nodes_FIDIT_FABRI_FZF_FM
-    df_edges = pd.read_csv("edges_FIDIT.csv") # edges_FIDIT_FABRI_FZF_FM
-    df_keywords = pd.read_csv("keywords_FIDIT.csv") # keywords_FIDIT_FABRI_FZF_FM
+    df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv") # nodes_FIDIT_FABRI_FZF_FM
+    df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv") # edges_FIDIT_FABRI_FZF_FM
+    df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv") # keywords_FIDIT_FABRI_FZF_FM
 except FileNotFoundError as e:
     print(f"Error: {e}")
     print("Please make sure you have executed the extraction script and have the CSV files in your directory.")
