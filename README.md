@@ -185,6 +185,10 @@ Scans the network for researcher pairs who share a high thematic keyword similar
 
 ---
 
+## Implementation details
+
+Metric/measure implementation details reference guide is available [here](readme_supplement.md).
+
 ## Data sources
 
 | Source | API base | What it provides |
