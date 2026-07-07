@@ -17,8 +17,8 @@ keywords_table = []
 institutions = [
     {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
     {"name": "FABRI", "crosbi_id": 303, "mbu": 335},
-    # {"name": "FZF",   "crosbi_id": 288, "mbu": 316},
-    # {"name": "FM",    "crosbi_id": 290, "mbu": 319},
+    {"name": "FZF",   "crosbi_id": 288, "mbu": 316},
+    {"name": "FM",    "crosbi_id": 290, "mbu": 319},
 ]
 
 # Central Map to translate CroRIS IDs and MBUs to acronyms
