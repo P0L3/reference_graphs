@@ -62,7 +62,7 @@ try:
         ax.bar(pivot.index,vals,bottom=bottom,label=str(col),color=c)
         bottom=vals if bottom is None else bottom+vals
     ax.set_ylabel("% of ties")
-    ax.set_title("Fragility of Ties")
+    # ax.set_title("Fragility of Ties")
     ax.legend(title="Shared layers")
     save(fig,"Fig01_FragilityOfTies")
 except Exception as e:
@@ -76,7 +76,7 @@ try:
     for i,v in enumerate(df["information_loss_pct"]):
         ax.text(i,v,f"{v:.1f}%",ha="center",va="bottom")
     ax.set_ylabel("Information loss (%)")
-    ax.set_title("Cost of Aggregation")
+    # ax.set_title("Cost of Aggregation")
     save(fig,"Fig02_CostOfAggregation")
 except Exception as e:
     print("Fig2 skipped:",e)
@@ -93,7 +93,7 @@ try:
     ax.set_xticks(list(x))
     ax.set_xticklabels(g["Layer"])
     ax.legend()
-    ax.set_title("Institutional Homophily vs Null")
+    # ax.set_title("Institutional Homophily vs Null")
     save(fig,"Fig03_HomophilyVsNull")
 except Exception as e:
     print("Fig3 skipped:",e)
@@ -104,7 +104,7 @@ try:
     fig,ax=plt.subplots(figsize=(7,4))
     ax.barh(df["Dataset"],df["ari_score"],color=OKABE_ITO["blue"])
     ax.set_xlabel("Adjusted Rand Index")
-    ax.set_title("Community Persistence")
+    # ax.set_title("Community Persistence")
     save(fig,"Fig04_CommunityPersistence")
 except Exception as e:
     print("Fig4 skipped:",e)
@@ -116,7 +116,7 @@ try:
     fig,ax=plt.subplots(figsize=(7,4))
     ax.bar(g["Hypothesis"],g["Closure Rate (%)"],color=OKABE_ITO["green"])
     ax.set_ylabel("Closure rate (%)")
-    ax.set_title("Multiplex Triadic Closure")
+    # ax.set_title("Multiplex Triadic Closure")
     save(fig,"Fig05_MultiplexTriadicClosure")
 except Exception as e:
     print("Fig5 skipped:",e)

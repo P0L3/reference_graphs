@@ -46,7 +46,7 @@ try:
     
     pivot_mult.plot(kind='bar', stacked=True, color=colors, ax=ax, edgecolor='black', linewidth=0.5)
     
-    ax.set_title("RQ2: Fragility of Ties (Edge Multiplicity)")
+    # ax.set_title("RQ2: Fragility of Ties (Edge Multiplicity)")
     ax.set_ylabel("Percentage of Connected Pairs (%)")
     ax.set_xlabel("")
     plt.xticks(rotation=15)
@@ -73,7 +73,7 @@ try:
     
     ax.bar(df_agg["Dataset"], df_agg["information_loss_pct"], color=colors, edgecolor='black')
     
-    ax.set_title("RQ3: Information Loss from Network Aggregation")
+    # ax.set_title("RQ3: Information Loss from Network Aggregation")
     ax.set_ylabel("Information Destroyed (%)")
     ax.set_xlabel("")
     
@@ -105,7 +105,7 @@ try:
     rects2 = ax.bar(x + width/2, df_global_top["Null Assort"], width, 
                     label='Random Chance (Null Model)', color=OKABE_ITO["grey"], edgecolor='black')
 
-    ax.set_title("RQ1: Statistical Proof of Institutional Silos (Global Network)")
+    # ax.set_title("RQ1: Statistical Proof of Institutional Silos (Global Network)")
     ax.set_ylabel("Assortativity Coefficient")
     ax.set_xticks(x)
     ax.set_xticklabels(df_global_top["Layer"])
@@ -133,7 +133,7 @@ try:
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.barplot(data=df_ari, y="Dataset", x="ari_score", color=OKABE_ITO["green"], edgecolor='black', ax=ax)
     
-    ax.set_title("RQ4: Community Persistence (Projects vs. Publications)")
+    # ax.set_title("RQ4: Community Persistence (Projects vs. Publications)")
     ax.set_xlabel("Adjusted Rand Index (ARI)")
     ax.set_ylabel("")
     ax.set_xlim(0, 1.0)
@@ -170,7 +170,7 @@ try:
     
     bars = ax.bar(labels, df_triad_global["Closure Rate (%)"], color=OKABE_ITO["purple"], edgecolor='black', width=0.5)
     
-    ax.set_title("RQ2: Multiplex Triadic Closure (Pathways of Social Capital)")
+    # ax.set_title("RQ2: Multiplex Triadic Closure (Pathways of Social Capital)")
     ax.set_ylabel("Triadic Closure Rate (%)")
     ax.grid(axis='y', linestyle='--', alpha=0.6)
     

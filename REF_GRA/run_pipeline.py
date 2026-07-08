@@ -22,7 +22,7 @@ print("==================================================\n")
 
 # Define the datasets we want to analyze
 # DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
-NULL_ITERATIONS = 10  # Passed through to RQ1's degree-preserving null models
+NULL_ITERATIONS = 1000  # Passed through to RQ1's degree-preserving null models
 
 # Create results directory
 os.makedirs("RESULTS", exist_ok=True)
