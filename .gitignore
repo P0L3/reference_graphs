@@ -8,7 +8,7 @@ REF_GRA/*.graphml
 REF_GRA/RESULTS/
 REF_GRA/OLD/*.graphml
 REF_GRA/OLD/*.html
-REF_GRA/PLOTS
+# REF_GRA/PLOTS
 
 *.csv*
 

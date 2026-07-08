@@ -1,4 +1,3 @@
-
 # CROSBI Reference Graph — Multiplex Academic Network Analysis
 
 A pipeline for building and visualising **multiplex organisational networks** from Croatian academic data. It pulls publication and project records from the public [CROSBI](https://www.bib.irb.hr/) and [CroRIS](https://www.croris.hr/) APIs, resolves researcher identities across sources, and assembles a four-layer graph that can be explored in 3D, analysed statistically, or exported to Gephi/Cytoscape.
@@ -12,21 +11,31 @@ Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF
 ```text
 fetch_crosbi_data.py          →  nodes / edges / keywords CSVs
         ↓
-build_graph_crosbi_data.py    →  GraphML + GEXF per layer
+build_graph_crosbi_data.py    →  GraphML + GEXF per layer (for Gephi/Cytoscape/PyVis)
         ↓
-[Option A: Interactive Visualisation]
-multiplex_graph_analysis_crosbi_data.py  →  3D egocentric plot & CLI exploration
-
-[Option B: Automated Batch Pipeline]
-run_pipeline.py (via builder.py)         →  Aggregated master CSVs in RESULTS/
-
-[Option C: Modular Academic Analysis]
-rq1_script.py          →  Topologies, homophily & null-model statistical testing
-rq2_script.py          →  Edge multiplicity, Jaccard similarity matrices & triadic closure
-rq3_script.py          →  Information loss (Spearman), Participation Coefficient & brokers
-rq4_script.py          →  Multilayer k-core (Elite Core) & Community Persistence (ARI)
-collab_recommender.py  →  Cross-faculty synergy matching (Jaccard gaps)
+        ├── [Primary] run_pipeline.py            →  Aggregated MASTER comparison CSVs in RESULTS/
+        │       (builds every dataset in-memory via builder.py, then calls the
+        │        rq1-rq4 functions below internally — this is the script you run)
+        │
+        └── [Optional / diagnostic]
+              multiplex_graph_analysis_crosbi_data.py  →  interactive 3D plot & ego-network CLI
 ```
+
+---
+
+## ⭐ The main entry point: `run_pipeline.py`
+
+**If you only run one script, run this one.**
+
+```shell
+python run_pipeline.py
+```
+
+It automatically builds every configured dataset in memory (`FIDIT`, `FABRI`, `FZF`, `FM`, and the combined `FIDIT_FABRI_FZF_FM`), runs the full RQ1–RQ4 analytical suite on each, and writes tagged, comparable master tables to `RESULTS/` — one row per `Dataset` per metric, so a single institution can be compared directly against the others or against the whole university. This is the setup used to produce every comparative figure in the paper.
+
+`rq1_script.py` through `rq4_script.py` (below) are **not separate pipeline steps** — they are the individual analysis modules that `run_pipeline.py` imports and calls internally (`rq1_process_graph()`, `rq2_process_graph()`, etc.). You do not need to run them yourself. They're documented separately only so that:
+- you can inspect exactly which metric belongs to which research question, and
+- you can run a single one standalone against one dataset while debugging or drafting a specific figure, without re-running the whole batch.
 
 ---
 
@@ -46,20 +55,20 @@ collab_recommender.py  →  Cross-faculty synergy matching (Jaccard gaps)
 ```text
 REF_GRA/
 ├── fetch_crosbi_data.py                  # Step 1 — API extraction & entity resolution
-├── build_graph_crosbi_data.py            # Step 2 — Graph assembly & Jaccard projection
-├── multiplex_graph_analysis_crosbi_data.py  # Step 3 (A) — Interactive 3D layout & ego-network CLI
-├── builder.py                            # Helper — In-memory multiplex graph constructor
-├── data_stats.py                         # Calculate publication and project statistics.
-├── plot_master_results(_2)/visuals.py    # Plot the Figures used in the related paper.
-├── run_pipeline.py                       # Step 3 (B) — Master automation engine for multiple datasets
-├── rq1_script.py                         # RQ1: Baseline topologies & Null models
-├── rq2_script.py                         # RQ2: Multiplexity, triads & edge robustness
-├── rq3_script.py                         # RQ3: Aggregation cost & interdisciplinary brokers
-├── rq4_script.py                         # RQ4: Core-periphery & Community persistence
+├── build_graph_crosbi_data.py            # Step 2 — Graph assembly, export for external tools
+├── builder.py                            # In-memory multiplex graph constructor, used by run_pipeline.py
+├── run_pipeline.py                       # ⭐ MAIN ENTRY POINT — master automation engine, all datasets
+├── rq1_script.py                         # Module: Baseline topologies & Null models (called by run_pipeline.py)
+├── rq2_script.py                         # Module: Multiplexity, triads & edge robustness (called by run_pipeline.py)
+├── rq3_script.py                         # Module: Aggregation cost & interdisciplinary brokers (called by run_pipeline.py)
+├── rq4_script.py                         # Module: Core-periphery & Community persistence (called by run_pipeline.py)
 ├── collab_recommender.py                 # Actionable insights: Synergetic recommendations
+├── multiplex_graph_analysis_crosbi_data.py  # Optional — Interactive 3D layout & ego-network CLI
+├── data_stats.py                         # Calculate publication and project statistics.
+├── plot_master_results(_2)/visuals.py    # Plot the Figures used in the related paper (read from RESULTS/)
 ├── crosbi_coauthorship_institution.ipynb # Interactive notebook (older, single-institution)
 ├── DATA/                                 # Raw pickles / CSVs (not tracked)
-├── RESULTS/                              # Aggregated multi-institutional CSV analysis tables
+├── RESULTS/                              # Aggregated multi-institutional CSV analysis tables (from run_pipeline.py)
 └── exported_graphs/                      # GraphML & GEXF outputs (generated at runtime)
 ```
 
@@ -109,17 +118,47 @@ institutions = [
 python build_graph_crosbi_data.py
 ```
 
-Loads the three CSVs, computes research-similarity edges via pairwise Jaccard comparison on keywords, assembles four NetworkX graphs, and exports each layer as both **GraphML** and **GEXF** under `exported_graphs/`. The files are timestamped, so re-runs never overwrite previous exports.
+Loads the three CSVs, computes research-similarity edges via pairwise Jaccard comparison on keywords, assembles four NetworkX graphs, and exports each layer as both **GraphML** and **GEXF** under `exported_graphs/`. This step is for feeding Gephi/Cytoscape/PyVis — it is not required by `run_pipeline.py`, which builds its own graphs in memory via `builder.py`.
 
 ---
 
-### Step 3 (Option A) — Interactive 3D Visualisation
+### Step 3 — Run the analysis: `run_pipeline.py` ⭐
+
+```shell
+python run_pipeline.py
+```
+
+This is the script you should run for any statistical/comparative analysis. It iterates through isolated single-institution datasets (FIDIT alone, FABRI alone, FZF alone, FM alone) as well as the combined global university graph, constructs each graph in-memory via `builder.py`, runs all four RQ modules on each, and writes tagged master comparison tables to `RESULTS/`:
+
+```text
+RESULTS/MASTER_RQ1_Topologies.csv
+RESULTS/MASTER_RQ2_EdgeMultiplicity.csv
+RESULTS/MASTER_RQ2_TriadicClosure.csv
+RESULTS/MASTER_RQ2_LayerSimilarity.csv
+RESULTS/MASTER_RQ2_StructuralTwins.csv
+RESULTS/MASTER_RQ3_AggregationStats.csv
+RESULTS/MASTER_RQ3_NodeMetrics_Full.csv
+RESULTS/MASTER_RQ3_NodeMetrics_Ranked.csv
+RESULTS/MASTER_RQ4_CommunityPersistence.csv
+RESULTS/MASTER_RQ4_CoreDecomposition.csv
+RESULTS/MASTER_RQ4_CoreStats.csv
+RESULTS/MASTER_RQ4_EliteCoreBreakdown.csv
+RESULTS/RUN_MANIFEST.csv
+```
+
+Every table has a `Dataset` column so any metric can be compared across FIDIT / FABRI / FZF / FM / the combined university. `RUN_MANIFEST.csv` records which datasets were successfully processed vs. skipped (e.g. missing CSVs, or a dataset that errored partway through) so a partial run is always auditable rather than silently incomplete.
+
+Ideal for testing macro (whole-university) vs. micro (single-faculty) organisational cultures.
+
+---
+
+### Optional — Interactive 3D Visualisation
 
 ```shell
 python multiplex_graph_analysis_crosbi_data.py
 ```
 
-Launches an interactive CLI to explore the network visually:
+Launches an interactive CLI to explore one dataset's network visually — useful for spot-checking or preparing a qualitative figure, not part of the statistical pipeline above.
 
 ```text
 Prompts:
@@ -142,48 +181,27 @@ The output is an **egocentric multiplex view**: four horizontal planes (one per 
 
 ---
 
-### Step 3 (Option B) — Automated Master Pipeline
+### Reference — The individual RQ modules (called internally by `run_pipeline.py`)
 
-```shell
-python run_pipeline.py
-```
-Automatically iterates through isolated single-institution datasets (e.g., FIDIT alone, FABRI alone) as well as the global university graph. It constructs the graphs in-memory via `builder.py`, runs all modular RQ scripts, and outputs master comparison tables to the `RESULTS/` directory. Ideal for testing macro vs. micro organisational cultures.
+You don't need to run these directly; they're documented here so each metric can be traced to the research question it answers. Each also has a standalone `__main__` block for debugging a single dataset in isolation.
 
----
+#### RQ1: Structural Topology & Homophily — `rq1_script.py`
+Calculates density, component count, and GCC. Tests institutional homophily (Assortativity) against **Degree-Preserving Null Models** to test whether departmental silos are driven by sociology or random chance.
 
-### Step 3 (Option C) — Modular Research Question Analysis
-
-If you are running the analysis incrementally or preparing figures for specific chapters of your paper, you can run the individual modular scripts standalone.
-
-#### RQ1: Structural Topology & Homophily
-```shell
-python rq1_script.py
-```
-Safely calculates density, component count, and GCC. Tests institutional homophily (Assortativity) against **Degree-Preserving Null Models** to statistically prove whether departmental silos are driven by sociology or random chance.
-
-#### RQ2: Cross-Layer Reinforcement
-```shell
-python rq2_script.py
-```
+#### RQ2: Cross-Layer Reinforcement — `rq2_script.py`
 Computes Edge Multiplicity (robustness of ties) and the Layer Similarity Matrix. Tests **Multiplex Triadic Closure** to see if social capital in one layer (e.g., Projects) successfully transfers into another (e.g., Publications).
 
-#### RQ3: Centrality & The Cost of Aggregation
-```shell
-python rq3_script.py
-```
-Calculates the **Spearman Rank Correlation** between Monoplex and Multiplex PageRank to quantify the exact percentage of information destroyed when flattening a network. Identifies true interdisciplinary boundary-spanners using the **Participation Coefficient ($P$)** and Burt's Constraint.
+#### RQ3: Centrality & The Cost of Aggregation — `rq3_script.py`
+Calculates the **Spearman Rank Correlation** between Monoplex and Multiplex PageRank to quantify the percentage of information destroyed when flattening a network. Identifies interdisciplinary boundary-spanners using the **Participation Coefficient ($P$)** and Burt's Constraint.
 
-#### RQ4: Core-Periphery & Community Persistence
-```shell
-python rq4_script.py
-```
-Uses **Multilayer $k$-core Decomposition** to isolate the resilient elite core of the university. Uses the **Adjusted Rand Index (ARI)** on Louvain communities to prove whether formal administrative funding boundaries dictate organic publication boundaries.
+#### RQ4: Core-Periphery & Community Persistence — `rq4_script.py`
+Uses **Multilayer $k$-core Decomposition** to isolate the resilient elite core of the university. Uses the **Adjusted Rand Index (ARI)** on Louvain communities to test whether formal administrative funding boundaries align with organic publication boundaries.
 
-#### Gaps: Dynamic Collaboration Recommender
+#### Gaps: Dynamic Collaboration Recommender — `collab_recommender.py`
 ```shell
 python collab_recommender.py
 ```
-Scans the network for researcher pairs who share a high thematic keyword similarity but have absolutely **zero** co-authored publications or shared projects. Generates a ranked checklist of inter-departmental synergy opportunities.
+Scans the network for researcher pairs who share a high thematic keyword similarity but have **zero** co-authored publications or shared projects. Generates a ranked checklist of inter-departmental synergy opportunities.
 
 ---
 

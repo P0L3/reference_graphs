@@ -43,8 +43,8 @@ plt.rcParams.update({
 def save(fig,name):
     fig.tight_layout()
     fig.savefig(PLOTS/f"{name}.png")
-    fig.savefig(PLOTS/f"{name}.pdf")
-    fig.savefig(PLOTS/f"{name}.svg")
+    # fig.savefig(PLOTS/f"{name}.pdf")
+    # fig.savefig(PLOTS/f"{name}.svg")
     plt.close(fig)
 
 # ---------------- Figure 1 ----------------
