@@ -2,33 +2,38 @@
 
 A pipeline for building and visualising **multiplex organisational networks** from Croatian academic data. It pulls publication and project records from the public [CROSBI](https://www.bib.irb.hr/) and [CroRIS](https://www.croris.hr/) APIs, resolves researcher identities across sources, and assembles a four-layer graph that can be explored in 3D, analysed statistically, or exported to Gephi/Cytoscape.
 
-Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF, and FM — but easily extended to any Croatian institution with a CROSBI ID. For this, refer to the [config](REF_GRA/config.py) file, specifically, define `INSTITUTIONS`, `INSTITUTION_COLORS`, `INSTITUTION_MARKERS`:
+Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF, and FM — but easily extended to any Croatian institution with a CROSBI ID via a single config file (see [Configuration](#configuration) below).
+
+---
+
+## Configuration
+
+Every institution/faculty-related constant used across the pipeline — the roster, the derived dataset list, colors, markers, and the "unaffiliated researcher" sentinel label — lives in one place: [`config.py`](REF_GRA/config.py). No other script defines its own copy of any of these anymore; they all `import` from here. Add, remove, or re-color an institution once, and it flows through fetching, building, every RQ module, and every plot without touching those files.
 
 ```python
+# config.py
 INSTITUTIONS = [
     {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
-        ...
+    # add or replace entries here — crosbi_id/mbu are required for the CROSBI/CroRIS APIs
+    ...
 ]
 
 INSTITUTION_COLORS = {
     "FIDIT": OKABE_ITO["sky_blue"],
-        ...
+    ...
     EXTERNAL_LABEL: "grey",
     LEGACY_UNKNOWN_LABEL: "lightgrey",
 }
 
-# ---------------------------------------------------------------------------
-# 5. MARKER / SHAPE MAP
-# ---------------------------------------------------------------------------
-# Matplotlib marker codes, also keyed by institution acronym.
 INSTITUTION_MARKERS = {
     "FIDIT": "^",   # Triangle Up
-        ...
+    ...
     EXTERNAL_LABEL: "o",   # Circle (fallback)
     LEGACY_UNKNOWN_LABEL: "o",
 }
-
 ```
+
+`DATASETS` and `COMBINED_DATASET_NAME` (e.g. `"FIDIT_FABRI_FZF_FM"`) are *derived* automatically from `INSTITUTIONS` rather than typed out separately, so they can never drift out of sync with the roster above.
 
 ---
 
@@ -47,6 +52,8 @@ build_graph_crosbi_data.py    →  GraphML + GEXF per layer (for Gephi/Cytoscape
               multiplex_graph_analysis_crosbi_data.py  →  interactive 3D plot & ego-network CLI
 ```
 
+All of the above pull their institution list, dataset list, colors, and markers from `config.py` (see [Configuration](#configuration)).
+
 ---
 
 ## ⭐ The main entry point: `run_pipeline.py`
@@ -57,7 +64,7 @@ build_graph_crosbi_data.py    →  GraphML + GEXF per layer (for Gephi/Cytoscape
 python run_pipeline.py
 ```
 
-It automatically builds every configured dataset in memory (`FIDIT`, `FABRI`, `FZF`, `FM`, and the combined `FIDIT_FABRI_FZF_FM`), runs the full RQ1–RQ4 analytical suite on each, and writes tagged, comparable master tables to `RESULTS/` — one row per `Dataset` per metric, so a single institution can be compared directly against the others or against the whole university. This is the setup used to produce every comparative figure in the paper.
+It automatically builds every dataset defined in `config.py` in memory (each institution alone — by default `FIDIT`, `FABRI`, `FZF`, `FM` — plus the combined university, `FIDIT_FABRI_FZF_FM`), runs the full RQ1–RQ4 analytical suite on each, and writes tagged, comparable master tables to `RESULTS/` — one row per `Dataset` per metric, so a single institution can be compared directly against the others or against the whole university. This is the setup used to produce every comparative figure in the paper.
 
 `rq1_script.py` through `rq4_script.py` (below) are **not separate pipeline steps** — they are the individual analysis modules that `run_pipeline.py` imports and calls internally (`rq1_process_graph()`, `rq2_process_graph()`, etc.). You do not need to run them yourself. They're documented separately only so that:
 - you can inspect exactly which metric belongs to which research question, and
@@ -80,6 +87,7 @@ It automatically builds every configured dataset in memory (`FIDIT`, `FABRI`, `F
 
 ```text
 REF_GRA/
+├── config.py                             # ⚙️ Single source of truth: institutions, dataset list, colors, markers
 ├── fetch_crosbi_data.py                  # Step 1 — API extraction & entity resolution
 ├── build_graph_crosbi_data.py            # Step 2 — Graph assembly, export for external tools
 ├── builder.py                            # In-memory multiplex graph constructor, used by run_pipeline.py
@@ -119,7 +127,7 @@ conda install pandas networkx matplotlib pyvis ipykernel requests tqdm nbconvert
 python fetch_crosbi_data.py
 ```
 
-Queries the CROSBI publications API and the CroRIS projects API for every configured institution, resolves researcher identities using a three-tier strategy (project metadata $\rightarrow$ publication vote majority $\rightarrow$ External fallback), and writes three CSV files:
+Queries the CROSBI publications API and the CroRIS projects API for every institution defined in `config.py`, resolves researcher identities using a three-tier strategy (project metadata $\rightarrow$ publication vote majority $\rightarrow$ External fallback), and writes three CSV files:
 
 ```text
 nodes_FIDIT_FABRI_FZF_FM.csv      # one row per unique researcher with institution
@@ -127,10 +135,11 @@ edges_FIDIT_FABRI_FZF_FM.csv      # raw co-authorship, mentorship, project edges
 keywords_FIDIT_FABRI_FZF_FM.csv   # keyword associations per researcher per publication
 ```
 
-To analyse a different set of institutions, edit the `institutions` list at the top of the script:
+To analyse a different set of institutions, edit `INSTITUTIONS` in [`config.py`](REF_GRA/config.py) — `fetch_crosbi_data.py` imports this list rather than defining its own copy, so this is the only place you need to make the change:
 
 ```python
-institutions = [
+# config.py
+INSTITUTIONS = [
     {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
     # add or replace entries here
 ]
@@ -154,7 +163,7 @@ Loads the three CSVs, computes research-similarity edges via pairwise Jaccard co
 python run_pipeline.py
 ```
 
-This is the script you should run for any statistical/comparative analysis. It iterates through isolated single-institution datasets (FIDIT alone, FABRI alone, FZF alone, FM alone) as well as the combined global university graph, constructs each graph in-memory via `builder.py`, runs all four RQ modules on each, and writes tagged master comparison tables to `RESULTS/`:
+This is the script you should run for any statistical/comparative analysis. It iterates through every dataset in `config.py` — each institution in isolation (FIDIT alone, FABRI alone, FZF alone, FM alone) as well as the combined global university graph — constructs each graph in-memory via `builder.py`, runs all four RQ modules on each, and writes tagged master comparison tables to `RESULTS/`:
 
 ```text
 RESULTS/MASTER_RQ1_Topologies.csv
@@ -199,7 +208,7 @@ The output is an **egocentric multiplex view**: four horizontal planes (one per 
 | Element | Encoding |
 |---------|----------|
 | Plane colour | Layer identity |
-| Node shape | Faculty affiliation (▲ FIDIT · ★ FABRI · ■ FZF · ◆ FM · ● External) |
+| Node shape | Faculty affiliation, per `INSTITUTION_MARKERS` in `config.py` (▲ FIDIT · ★ FABRI · ■ FZF · ◆ FM · ● External) |
 | Node position | Unified 2D coordinates projected onto vertical Z-planes |
 | Node opacity | Primary interaction layer = 0.90 · Ghost layers = 0.07 · Background = 0.15 |
 | Edge weight | Thicker / black for edges incident to the target researcher |
