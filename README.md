@@ -49,6 +49,8 @@ REF_GRA/
 ├── build_graph_crosbi_data.py            # Step 2 — Graph assembly & Jaccard projection
 ├── multiplex_graph_analysis_crosbi_data.py  # Step 3 (A) — Interactive 3D layout & ego-network CLI
 ├── builder.py                            # Helper — In-memory multiplex graph constructor
+├── data_stats.py                         # Calculate publication and project statistics.
+├── plot_master_results(_2)/visuals.py    # Plot the Figures used in the related paper.
 ├── run_pipeline.py                       # Step 3 (B) — Master automation engine for multiple datasets
 ├── rq1_script.py                         # RQ1: Baseline topologies & Null models
 ├── rq2_script.py                         # RQ2: Multiplexity, triads & edge robustness

@@ -11,11 +11,11 @@ os.makedirs("PLOTS", exist_ok=True)
 
 # Okabe-Ito Color Palette
 OKABE_ITO = {
-    "FIDIT": "#D55E00",   # Vermillion
-    "FABRI": "#56B4E9",   # Sky Blue
+    "FIDIT":  "#56B4E9",   # Sky Blue
+    "FABRI": "#CC79A7",   # Vermillion
     "FZF":   "#E69F00",   # Orange
-    "FM":    "#000000",   # Black
-    "GLOBAL": "#009E73"   # Green
+    "FM":    "#009E73",   # Green
+    "GLOBAL": "#000000",   # Black 
 }
 
 plt.rcParams.update({
@@ -123,7 +123,7 @@ for inst in ["FIDIT", "FABRI", "FZF", "FM"]:
             markersize=5
         )
 
-ax.set_title("Longitudinal Distribution of Collaborative Publications (2005–2026)")
+# ax.set_title("Longitudinal Distribution of Collaborative Publications (2005–2026)")
 ax.set_ylabel("Number of Publications")
 ax.set_xlabel("Year")
 
@@ -148,7 +148,7 @@ for inst in ["FIDIT", "FABRI", "FZF", "FM"]:
         ax.plot(proj_timelines[inst].index, proj_timelines[inst].values, 
                 label=inst, color=OKABE_ITO[inst], linewidth=2.5, marker='s', markersize=5)
 
-ax.set_title("Density of Active Funded Projects per Year (2005–2026)")
+# ax.set_title("Density of Active Funded Projects per Year (2005–2026)")
 ax.set_ylabel("Number of Active Projects")
 ax.set_xlabel("Year")
 
