@@ -4,6 +4,7 @@ import itertools
 from tqdm import tqdm
 import os
 from datetime import datetime
+from config import DATASETS, EXTERNAL_LABEL
 
 # ==========================================
 # CONFIG: WHICH DATASETS TO BUILD
@@ -11,7 +12,7 @@ from datetime import datetime
 # Each entry must correspond to a nodes_{name}.csv / edges_{name}.csv / keywords_{name}.csv
 # triplet produced by fetch_crosbi_data.py. Add/remove entries here to control which
 # per-institution (and combined) graphs get built in a single run.
-DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
+# DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
 
 SIMILARITY_THRESHOLD = 0.025
 OUTPUT_DIR = "exported_graphs"
@@ -33,7 +34,7 @@ def load_dataset(dataset_name):
         return None, None, None
 
     # Ensure null institutions are marked as Unknown
-    df_nodes["institution"] = df_nodes["institution"].fillna("Unknown")
+    df_nodes["institution"] = df_nodes["institution"].fillna(EXTERNAL_LABEL)
     return df_nodes, df_edges, df_keywords
 
 

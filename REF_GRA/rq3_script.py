@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import itertools
 from scipy.stats import spearmanr
+from config import EXTERNAL_LABEL
 
 
 def rq3_process_graph(multiplex_graph):
@@ -118,7 +119,7 @@ def rq3_process_graph(multiplex_graph):
     # 4. RANK COMPARISON & STATISTICS
     # ---------------------------------------------------------
     df_internal = df_rq3[
-        (df_rq3["Total Degree"] > 0) & (df_rq3["Institution"] != "External")
+        (df_rq3["Total Degree"] > 0) & (df_rq3["Institution"] != EXTERNAL_LABEL)
     ].copy()
 
     df_internal["Mono_Rank"]  = df_internal["Monoplex PR"].rank(ascending=False).astype(int)

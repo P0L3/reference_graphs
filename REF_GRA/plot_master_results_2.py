@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from config import DATASETS, COMBINED_DATASET_NAME
 
 print("==========================================")
 print("  GENERATING MASTER PLOTS FROM CSV DATA")
@@ -37,7 +38,7 @@ try:
     df_mult = pd.read_csv("RESULTS/MASTER_RQ2_EdgeMultiplicity.csv")
     pivot_mult = df_mult.pivot(index="Dataset", columns="Layers Shared", values="Percentage (%)")
     # Order datasets logically
-    order = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
+    order = DATASETS
     pivot_mult = pivot_mult.reindex(order)
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -92,7 +93,7 @@ except Exception as e: print(f"Skipping Plot 2: {e}")
 # ==========================================
 try:
     df_top = pd.read_csv("RESULTS/MASTER_RQ1_Topologies.csv")
-    df_global_top = df_top[df_top["Dataset"] == "FIDIT_FABRI_FZF_FM"].copy()
+    df_global_top = df_top[df_top["Dataset"] == COMBINED_DATASET_NAME].copy()
 
     x = np.arange(len(df_global_top["Layer"]))
     width = 0.35
@@ -156,7 +157,7 @@ except Exception as e: print(f"Skipping Plot 4: {e}")
 # ==========================================
 try:
     df_triad = pd.read_csv("RESULTS/MASTER_RQ2_TriadicClosure.csv")
-    df_triad_global = df_triad[df_triad["Dataset"] == "FIDIT_FABRI_FZF_FM"]
+    df_triad_global = df_triad[df_triad["Dataset"] == COMBINED_DATASET_NAME]
 
     fig, ax = plt.subplots(figsize=(10, 6))
     

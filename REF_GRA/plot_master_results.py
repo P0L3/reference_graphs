@@ -19,6 +19,8 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from config import COMBINED_DATASET_NAME
+
 RESULTS = Path("RESULTS")
 PLOTS = Path("PLOTS")
 PLOTS.mkdir(exist_ok=True)
@@ -82,7 +84,7 @@ except Exception as e:
 # ---------------- Figure 3 ----------------
 try:
     df=pd.read_csv(RESULTS/"MASTER_RQ1_Topologies.csv")
-    g=df[df["Dataset"]=="FIDIT_FABRI_FZF_FM"]
+    g=df[df["Dataset"]==COMBINED_DATASET_NAME]
     x=range(len(g))
     w=0.35
     fig,ax=plt.subplots(figsize=(8,5))
@@ -110,7 +112,7 @@ except Exception as e:
 # ---------------- Figure 5 ----------------
 try:
     df=pd.read_csv(RESULTS/"MASTER_RQ2_TriadicClosure.csv")
-    g=df[df["Dataset"]=="FIDIT_FABRI_FZF_FM"] if "Dataset" in df.columns else df
+    g=df[df["Dataset"]==COMBINED_DATASET_NAME] if "Dataset" in df.columns else df
     fig,ax=plt.subplots(figsize=(7,4))
     ax.bar(g["Hypothesis"],g["Closure Rate (%)"],color=OKABE_ITO["green"])
     ax.set_ylabel("Closure rate (%)")

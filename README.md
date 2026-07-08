@@ -2,7 +2,33 @@
 
 A pipeline for building and visualising **multiplex organisational networks** from Croatian academic data. It pulls publication and project records from the public [CROSBI](https://www.bib.irb.hr/) and [CroRIS](https://www.croris.hr/) APIs, resolves researcher identities across sources, and assembles a four-layer graph that can be explored in 3D, analysed statistically, or exported to Gephi/Cytoscape.
 
-Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF, and FM — but easily extended to any Croatian institution with a CROSBI ID.
+Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF, and FM — but easily extended to any Croatian institution with a CROSBI ID. For this, refer to the [config](REF_GRA/config.py) file, specifically, define `INSTITUTIONS`, `INSTITUTION_COLORS`, `INSTITUTION_MARKERS`:
+
+```python
+INSTITUTIONS = [
+    {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
+        ...
+]
+
+INSTITUTION_COLORS = {
+    "FIDIT": OKABE_ITO["sky_blue"],
+        ...
+    EXTERNAL_LABEL: "grey",
+    LEGACY_UNKNOWN_LABEL: "lightgrey",
+}
+
+# ---------------------------------------------------------------------------
+# 5. MARKER / SHAPE MAP
+# ---------------------------------------------------------------------------
+# Matplotlib marker codes, also keyed by institution acronym.
+INSTITUTION_MARKERS = {
+    "FIDIT": "^",   # Triangle Up
+        ...
+    EXTERNAL_LABEL: "o",   # Circle (fallback)
+    LEGACY_UNKNOWN_LABEL: "o",
+}
+
+```
 
 ---
 

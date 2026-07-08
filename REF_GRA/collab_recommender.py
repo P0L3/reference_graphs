@@ -3,6 +3,8 @@ import networkx as nx
 
 import loading_graph
 
+from config import EXTERNAL_LABEL, LEGACY_UNKNOWN_LABEL
+
 
 multiplex_graph = loading_graph.load_graph()
 
@@ -31,21 +33,21 @@ for u, v, data in multiplex_graph["similarity"].edges(data=True):
             inst_v = node_institutions.get(v, "Unknown")
             
             # 3. Filter: Only keep cross-institutional gaps (no unknowns, no externals for noise)
-            if inst_u != "Unknown" and inst_v != "Unknown" and inst_u != "External" and inst_v != "External":
-                if True: # inst_u != inst_v:
-                    # Get display names
-                    attrs_u = multiplex_graph["similarity"].nodes[u]
-                    attrs_v = multiplex_graph["similarity"].nodes[v]
-                    name_u = f"{attrs_u.get('name', '')} {attrs_u.get('surname', '')}".strip()
-                    name_v = f"{attrs_v.get('name', '')} {attrs_v.get('surname', '')}".strip()
-                    
-                    recs.append({
-                        "Researcher A": name_u,
-                        "Inst A": inst_u,
-                        "Researcher B": name_v,
-                        "Inst B": inst_v,
-                        "Intellectual Proximity (Jaccard)": f"{weight:.4f}"
-                    })
+            if inst_u not in (LEGACY_UNKNOWN_LABEL, EXTERNAL_LABEL) and inst_v not in (LEGACY_UNKNOWN_LABEL, EXTERNAL_LABEL): # and inst_u != inst_v:
+               
+                # Get display names
+                attrs_u = multiplex_graph["similarity"].nodes[u]
+                attrs_v = multiplex_graph["similarity"].nodes[v]
+                name_u = f"{attrs_u.get('name', '')} {attrs_u.get('surname', '')}".strip()
+                name_v = f"{attrs_v.get('name', '')} {attrs_v.get('surname', '')}".strip()
+                
+                recs.append({
+                    "Researcher A": name_u,
+                    "Inst A": inst_u,
+                    "Researcher B": name_v,
+                    "Inst B": inst_v,
+                    "Intellectual Proximity (Jaccard)": f"{weight:.4f}"
+                })
 
 df_recs = pd.DataFrame(recs)
 

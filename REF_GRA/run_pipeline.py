@@ -14,12 +14,14 @@ from rq2_script import rq2_process_graph
 from rq3_script import rq3_process_graph
 from rq4_script import rq4_process_graph
 
+from config import DATASETS
+
 print("==================================================")
 print("  MULTI-INSTITUTIONAL M-ONA PIPELINE ENGINE")
 print("==================================================\n")
 
 # Define the datasets we want to analyze
-DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
+# DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
 NULL_ITERATIONS = 10  # Passed through to RQ1's degree-preserving null models
 
 # Create results directory

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import adjusted_rand_score
 from networkx.algorithms.community import louvain_communities
+from config import EXTERNAL_LABEL
 
 
 def rq4_process_graph(multiplex_graph):
@@ -150,7 +151,7 @@ def rq4_process_graph(multiplex_graph):
         multiplex_graph["co-authorship"].nodes.get(n, {}).get("institution", "Unknown")
         for n in elite_core
     ]
-    internal_insts = [i for i in core_institutions if i != "External"]
+    internal_insts = [i for i in core_institutions if i != EXTERNAL_LABEL]
 
     if internal_insts:
         inst_counts = pd.Series(internal_insts).value_counts().reset_index()

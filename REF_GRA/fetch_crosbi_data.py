@@ -5,6 +5,7 @@ from tqdm import tqdm
 import networkx as nx
 import os
 from datetime import datetime
+from config import INSTITUTIONS as institutions
 
 # ==========================================
 # 1. SETUP: NODE REGISTRY & DATA TABLES
@@ -13,13 +14,13 @@ nodes_registry = {}
 edges_table = []
 keywords_table = []
 
-# Define the institutions you want to analyze
-institutions = [
-    {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
-    {"name": "FABRI", "crosbi_id": 303, "mbu": 335},
-    {"name": "FZF",   "crosbi_id": 288, "mbu": 316},
-    {"name": "FM",    "crosbi_id": 290, "mbu": 319},
-]
+# # Define the institutions you want to analyze
+# institutions = [
+#     {"name": "FIDIT", "crosbi_id": 289, "mbu": 318},
+#     {"name": "FABRI", "crosbi_id": 303, "mbu": 335},
+#     {"name": "FZF",   "crosbi_id": 288, "mbu": 316},
+#     {"name": "FM",    "crosbi_id": 290, "mbu": 319},
+# ]
 
 # Central Map to translate CroRIS IDs and MBUs to acronyms
 ID_TO_ACRONYM = {

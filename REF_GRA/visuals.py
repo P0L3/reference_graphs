@@ -9,6 +9,8 @@ import itertools
 from tqdm import tqdm
 import warnings
 
+from config import DATASETS, INSTITUTION_COLORS as INST_COLORS, INSTITUTION_MARKERS as INST_MARKERS
+
 warnings.filterwarnings("ignore")
 
 # Import your graph builder
@@ -23,7 +25,7 @@ print("==================================================\n")
 # ==========================================
 os.makedirs("PLOTS", exist_ok=True)
 
-DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
+# DATASETS = ["FIDIT", "FABRI", "FZF", "FM", "FIDIT_FABRI_FZF_FM"]
 
 # Okabe-Ito Color Palette
 OKABE_ITO = {
@@ -38,24 +40,24 @@ OKABE_ITO = {
 }
 
 # Institutional Color Mapping
-INST_COLORS = {
-    "FIDIT": OKABE_ITO["vermillion"],
-    "FABRI": OKABE_ITO["sky_blue"],
-    "FZF":   "gold", # Tweaked for scatter visibility
-    "FM":    OKABE_ITO["black"],
-    "External": "grey",
-    "Unknown": "lightgrey"
-}
+# INST_COLORS = {
+#     "FIDIT": OKABE_ITO["vermillion"],
+#     "FABRI": OKABE_ITO["sky_blue"],
+#     "FZF":   "gold", # Tweaked for scatter visibility
+#     "FM":    OKABE_ITO["black"],
+#     "External": "grey",
+#     "Unknown": "lightgrey"
+# }
 
 # Institutional Markers for Plot 4
-INST_MARKERS = {
-    "FIDIT": "^",
-    "FABRI": "*",
-    "FZF": "s",
-    "FM": "D",
-    "External": "o",
-    "Unknown": "o"
-}
+# INST_MARKERS = {
+#     "FIDIT": "^",
+#     "FABRI": "*",
+#     "FZF": "s",
+#     "FM": "D",
+#     "External": "o",
+#     "Unknown": "o"
+# }
 
 plt.rcParams.update({
     'font.size': 12, 'axes.labelsize': 14, 'axes.titlesize': 16,

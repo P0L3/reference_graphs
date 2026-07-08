@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from config import DATASETS as datasets, INSTITUTION_COLORS
 
 print("==========================================")
 print("  COMPREHENSIVE DATASET STATISTICS")
@@ -10,13 +11,15 @@ print("==========================================\n")
 os.makedirs("PLOTS", exist_ok=True)
 
 # Okabe-Ito Color Palette
-OKABE_ITO = {
-    "FIDIT":  "#56B4E9",   # Sky Blue
-    "FABRI": "#CC79A7",   # Vermillion
-    "FZF":   "#E69F00",   # Orange
-    "FM":    "#009E73",   # Green
-    "GLOBAL": "#000000",   # Black 
-}
+OKABE_ITO = INSTITUTION_COLORS
+OKABE_ITO["GLOBAL"] = "#000000"
+# {
+#     "FIDIT":  "#56B4E9",   # Sky Blue
+#     "FABRI": "#CC79A7",   # Vermillion
+#     "FZF":   "#E69F00",   # Orange
+#     "FM":    "#009E73",   # Green
+#     "GLOBAL": "#000000",   # Black 
+# }
 
 plt.rcParams.update({
     'font.size': 12, 'axes.labelsize': 14, 'axes.titlesize': 15,
@@ -24,13 +27,7 @@ plt.rcParams.update({
     'figure.dpi': 300, 'savefig.dpi': 300, 'font.family': 'serif'
 })
 
-DATASETS = [
-    ("FIDIT", "FIDIT"), 
-    ("FABRI", "FABRI"), 
-    ("FZF", "FZF"), 
-    ("FM", "FM"), 
-    ("GLOBAL", "FIDIT_FABRI_FZF_FM")
-]
+DATASETS = [(d, d) for d in datasets[:-1]] + [("GLOBAL", datasets[-1])]
 
 stats = []
 

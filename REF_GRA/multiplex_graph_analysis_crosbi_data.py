@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from tqdm import tqdm
 
+from config import DATASETS, INSTITUTION_COLORS, INSTITUTION_MARKERS as INST_MARKERS
+
 
 plt.rcParams.update({
     # 'font.size': 12, 'axes.labelsize': 14, 'axes.titlesize': 15,
@@ -23,9 +25,9 @@ plt.rcParams.update({
 # ==========================================
 print("Loading data files...")
 try:
-    df_nodes = pd.read_csv("nodes_FIDIT_FABRI_FZF_FM.csv") # nodes_FIDIT_FABRI_FZF_FM
-    df_edges = pd.read_csv("edges_FIDIT_FABRI_FZF_FM.csv") # edges_FIDIT_FABRI_FZF_FM
-    df_keywords = pd.read_csv("keywords_FIDIT_FABRI_FZF_FM.csv") # keywords_FIDIT_FABRI_FZF_FM
+    df_nodes = pd.read_csv(f"nodes_{DATASETS[-1]}.csv") # nodes_{DATASETS[-1]}
+    df_edges = pd.read_csv(f"edges_{DATASETS[-1]}.csv") # edges_{DATASETS[-1]}
+    df_keywords = pd.read_csv(f"keywords_{DATASETS[-1]}.csv") # keywords_{DATASETS[-1]}
 except FileNotFoundError as e:
     print(f"Error: {e}")
     print("Please make sure you have executed the extraction script and have the CSV files in your directory.")
@@ -253,13 +255,13 @@ layers_meta = {
 # High-contrast colorblind-safe palette mapping for institutions
 # Vermillion, Sky Blue, Yellowish Green, Charcoal, Grey
 # colorblind-friendly markers for institutional mapping
-INST_MARKERS = {
-    "FIDIT": "^",     # Triangle Up
-    "FABRI": "*",     # Star (5-point)
-    "FZF": "s",       # Square
-    "FM": "D",        # Diamond
-    "External": "o"    # Circle (fallback)
-}
+# INST_MARKERS = {
+#     "FIDIT": "^",     # Triangle Up
+#     "FABRI": "*",     # Star (5-point)
+#     "FZF": "s",       # Square
+#     "FM": "D",        # Diamond
+#     "External": "o"    # Circle (fallback)
+# }
 
 # 5a. Draw Layer Planes (Planes remain distinct, while node colors reflect institution)
 x_vals = [coords[0] for coords in pos_2d.values()]
