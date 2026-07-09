@@ -156,6 +156,7 @@ print("="*42 + "\n")
 
 # 3a. Search Name Selection with Substring Support
 while True:
+
     search_query = input("Enter researcher name to highlight (e.g. 'mestrovic', 'andrija'): ").strip()
     if not search_query:
         print("Input cannot be empty. Try again.")
@@ -193,6 +194,13 @@ while True:
         else:
             print("Invalid selection. Restarting search.")
 
+# 3c
+anon = False
+anon_inp = input("Input any character if you want to anonymize the Figure: ")
+if anon_inp != "":
+    anon = True
+else:
+    anon = False
 # 3b. Context Node Selection
 num_nodes_input = input("Enter number of context nodes to display [default 120]: ").strip()
 num_nodes = int(num_nodes_input) if num_nodes_input.isdigit() else 120
@@ -251,17 +259,6 @@ layers_meta = {
     "project":       {"z": 2, "color": "#009E73"}, # Green Plane
     "similarity":    {"z": 1, "color": "#E69F00"}  # Orange Plane
 }
-
-# High-contrast colorblind-safe palette mapping for institutions
-# Vermillion, Sky Blue, Yellowish Green, Charcoal, Grey
-# colorblind-friendly markers for institutional mapping
-# INST_MARKERS = {
-#     "FIDIT": "^",     # Triangle Up
-#     "FABRI": "*",     # Star (5-point)
-#     "FZF": "s",       # Square
-#     "FM": "D",        # Diamond
-#     "External": "o"    # Circle (fallback)
-# }
 
 # 5a. Draw Layer Planes (Planes remain distinct, while node colors reflect institution)
 x_vals = [coords[0] for coords in pos_2d.values()]
@@ -342,6 +339,8 @@ for node in pos_2d.keys():
     
     attrs = multiplex_graph['co-authorship'].nodes.get(node, {})
     name_display = f"{attrs.get('name', '')} {attrs.get('surname', '')}".strip()
+    if anon:
+        name_display = "".join(a[0] for a in name_display.split(" "))
     if not name_display: name_display = node
     
     if node == node_to_highlight:
@@ -370,6 +369,6 @@ legend_elements = [plt.Line2D([0], [0], marker=marker, color='w', label=inst,
                    for inst, marker in INST_MARKERS.items()]
 ax.legend(handles=legend_elements, loc='upper right', title="Faculty Affiliation")
 
-plt.title(f"Egocentric Multiplex View: {display_name}", fontsize=16, y=0.96)
+plt.title(f"{display_name}", fontsize=16, y=0.96)
 plt.tight_layout()
 plt.show()

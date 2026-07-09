@@ -1,0 +1,1080 @@
+<!DOCTYPE html><html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>OZM Seminar </title>
+<!--Generated on Thu Jul  9 10:46:56 2026 by LaTeXML (version 0.8.6) http://dlmf.nist.gov/LaTeXML/.-->
+
+<link rel="stylesheet" href="LaTeXML.css" type="text/css">
+<link rel="stylesheet" href="ltx-article.css" type="text/css">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">OZM Seminar
+</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Andrija Poleksić 
+<br class="ltx_break">Faculty of Informatics and Digital Technologies, University of Rijeka 
+<br class="ltx_break">Center for Artificial Intelligence and Cybersecurity, University of Rijeka 
+<br class="ltx_break">Rijeka, Croatia 
+<br class="ltx_break"><span class="ltx_text ltx_font_typewriter">andrija.poleksic@uniri.hr</span> 
+<br class="ltx_break">
+</span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Understanding the structural dynamics of academic institutions is important for fostering interdisciplinary innovation. Traditional Organizational Network Analysis (ONA) typically reduces multifaceted academic interactions into a single-layer (monoplex) graph, an aggregation that discards structural information and can obscure institutional hierarchies. This paper introduces a Multiplex Organizational Network Analysis (mONA) framework for modelling and evaluating inter-institutional dynamics, and applies it to a case study of four faculties at the University of Rijeka (FIDIT, FABRI, FZF, and FM). Using an automated extraction pipeline built on the Croatian public registries CROSBI and CroRIS, we construct a four-layer multiplex network spanning organic scientific output (co-authorship), hierarchical educational pipelines (mentorship), intellectual proximity (Jaccard-projected keyword similarity), and formal administrative funding (project co-participation).</p>
+<p class="ltx_p">Applying multilayer network metrics - including the Participation Coefficient, Multilayer <math id="m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>-core decomposition, and Multiplex PageRank - we examine cross-layer reinforcement and node versatility, test institutional homophily against degree-preserving randomized null models, and use the Adjusted Rand Index (ARI) to assess community persistence across layers. The results reveal a pronounced "formal-organic gap": funded projects act as one of the few structural bridges between faculties, yet exhibit low edge overlap with organic publication communities, which remain largely autonomous. Shifting from monoplex to multiplex centrality also reveals systematic differences in how much structural information is lost during aggregation across faculties, and surfaces "hidden brokers" whose administrative and cognitive centrality is not reflected in raw publication volume. Together, these findings quantify the practical cost of network aggregation in an academic setting and offer actionable guidance for university leadership, including a prototype recommender system for identifying latent, cross-departmental research synergies.</p>
+<p class="ltx_p">Implementation of this framework is available on GitHub: <a href="https://github.com/P0L3/reference_graphs" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/P0L3/reference_graphs</a>.</p>
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">Keywords:</span> <span class="ltx_text ltx_font_italic">Multilayer Networks, Organizational Network Analysis, Multiplexity, Academic Collaboration, Community Detection, Network Sociology</span></p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p class="ltx_p">The production of scientific knowledge is not only an intellectual process, but also a social and organizational one. Researchers do not operate in isolation; rather, they are embedded in a web of collaborations, supervisory relationships, institutional affiliations, and thematic proximities that shape both the direction and the visibility of academic work. For this reason, Social Network Analysis (SNA) and, more specifically, <span class="ltx_text ltx_font_italic">Organizational Network Analysis</span> (ONA), have become useful frameworks for studying how academic institutions function beyond their formal administrative charts. Instead of viewing a university only as a hierarchy of departments and faculties, ONA makes it possible to examine the actual relational structures through which knowledge is produced, transmitted, and coordinated.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p class="ltx_p">Existing studies of academic collaboration have shown that formal organizational units only partially coincide with emergent scientific communities. Co-authorship networks often reveal structures that cut across schools, colleges, laboratories, and disciplinary boundaries, while project participation and other administrative forms of coordination may follow different logics altogether <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib26" title="Comparing university organizational units and scientific co-authorship communities" class="ltx_ref">24</a>, <a href="#bib.bib25" title="Interdisciplinary patterns of a university: investigating collaboration using co-publication network analysis" class="ltx_ref">25</a>, <a href="#bib.bib33" title="Do researchers collaborate in a similar way to publish and to develop projects?" class="ltx_ref">8</a>]</cite>. At the same time, recent multiplex studies of researcher systems show that collaboration cannot be reduced to publications alone, because citation ties, topical similarity, and other relational dimensions frequently capture additional and structurally meaningful forms of academic proximity <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib36" title="Prediction of new scientific collaborations through multiplex networks" class="ltx_ref">33</a>, <a href="#bib.bib37" title="Emergence of multiplex communities in collaboration networks" class="ltx_ref">3</a>]</cite>. In this sense, the academic community constitutes a particularly suitable setting for multilayer network analysis.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p class="ltx_p">Despite this relational richness, many studies of academic collaboration still rely on single-layer, or <span class="ltx_text ltx_font_italic">monoplex</span>, graph representations. In such models, multiple forms of interaction are either ignored or aggregated into a single edge set. Although this simplification is computationally convenient, it comes at a substantial analytical cost. Once co-authorship, mentorship, project participation, and intellectual similarity are collapsed into one graph, the distinct social meanings of these ties become blurred, and important structural differences may disappear altogether <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p class="ltx_p">This problem is not merely technical. In organizational settings, the aggregation of heterogeneous ties may distort the identification of key actors, mask the distinction between formal and organic collaboration, and create a misleading impression of institutional cohesion. A researcher who appears peripheral in a publication network may occupy a central bridging role in project administration or mentorship, while a formally well-connected project structure may coexist with highly fragmented publication communities. In this sense, the reduction of a multidimensional academic system to a single graph risks obscuring precisely those features that are most relevant for understanding interdisciplinarity, brokerage, and institutional integration.</p>
+</div>
+<div id="S1.p5" class="ltx_para">
+<p class="ltx_p">The need to preserve relational heterogeneity is consistent with the broader insight that complex systems exhibit properties that are not reducible to the sum of their isolated parts. In the language of multilayer network science, this means that the interaction between layers may generate structural patterns that remain invisible in any one layer alone or in their flattened aggregate <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>, <a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. A multiplex perspective is therefore not simply a more detailed description of the same system, but a qualitatively different analytical representation.</p>
+</div>
+<div id="S1.p6" class="ltx_para">
+<p class="ltx_p">Against this background, the present study proposes a <span class="ltx_text ltx_font_italic">Multiplex Organizational Network Analysis</span> framework for examining the internal structure of an academic institution. Rather than representing the university through a single collaboration graph, the study models it as a four-layer multiplex network in which researchers are connected through co-authorship, mentorship, keyword-based cognitive similarity, and project co-participation. Empirically, the analysis focuses on four faculties of the University of Rijeka - the Faculty of Informatics and Digital Technologies (FIDIT), the Faculty of Biotechnology and Drug Development (FABRI), the Faculty of Physics (FZF), and the Faculty of Mathematics (FM) - using data extracted from the Croatian public registries CROSBI and CroRIS.</p>
+</div>
+<div id="S1.p7" class="ltx_para">
+<p class="ltx_p">The contribution of the paper is threefold. First, it develops an automated pipeline for constructing a multiplex academic network from heterogeneous public registry data. Second, it applies multilayer network analysis to an intra-university setting in order to compare formal administrative collaboration with organic scientific collaboration. Third, it evaluates how aggregation alters the perception of institutional structure, especially with respect to homophily, brokerage, community persistence, and core-periphery organization. In this way, the paper joins existing work on university collaboration, publication–project comparison, and multiplex researcher modeling, while combining these perspectives within a single case of academic organizational analysis <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib26" title="Comparing university organizational units and scientific co-authorship communities" class="ltx_ref">24</a>, <a href="#bib.bib33" title="Do researchers collaborate in a similar way to publish and to develop projects?" class="ltx_ref">8</a>, <a href="#bib.bib36" title="Prediction of new scientific collaborations through multiplex networks" class="ltx_ref">33</a>]</cite>.</p>
+</div>
+<div id="S1.p8" class="ltx_para">
+<p class="ltx_p">To systematically investigate these issues, the study is guided by four primary Research Questions (RQs). Rather than relying only on descriptive network statistics, each RQ is paired with a corresponding hypothesis and evaluated through metrics tailored to multiplex structure <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>:</p>
+</div>
+<div id="S1.p9" class="ltx_para">
+<ul id="S1.I1" class="ltx_itemize">
+<li id="S1.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S1.I1.i1.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">RQ1 (Structural Topology &amp; Homophily):</span> How do the formal, hierarchical, and intellectual layers of an academic institution differ in their network topology, and to what extent is institutional homophily statistically significant?
+<span class="ltx_text ltx_font_italic">Hypothesis:</span> Faculties operate as highly siloed administrative and cognitive clusters. We test this by comparing the observed institutional assortativity against degree-preserving randomized null models.</p>
+</div>
+</li>
+<li id="S1.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S1.I1.i2.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">RQ2 (Cross-Layer Reinforcement):</span> To what extent do formal administrative collaborations (Projects) dictate organic scientific output (Co-authorship)?
+<span class="ltx_text ltx_font_italic">Hypothesis:</span> Formal funding and organic output are distinct sociological processes. We measure this through edge multiplicity distributions and multiplex triadic closure, identifying whether social capital successfully flows across different contextual layers.</p>
+</div>
+</li>
+<li id="S1.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S1.I1.i3.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">RQ3 (The Cost of Aggregation &amp; Interdisciplinary Brokerage):</span> How does the identification of key institutional actors change when shifting from a monoplex (single-layer) to a multiplex paradigm?
+<span class="ltx_text ltx_font_italic">Hypothesis:</span> Aggregating a university into a single-layer network destroys critical structural information, hiding true interdisciplinary brokers. We quantify this information loss using Spearman rank correlation between monoplex and multiplex PageRank, and identify boundary-spanners using the Participation Coefficient (<math id="S1.I1.i3.p1.m1" class="ltx_Math" alttext="P" display="inline"><mi>P</mi></math>).</p>
+</div>
+</li>
+<li id="S1.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S1.I1.i4.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">RQ4 (Core-Periphery &amp; Community Persistence):</span> Are institutional sub-communities resilient, and do funding structures strictly define publication boundaries?
+<span class="ltx_text ltx_font_italic">Hypothesis:</span> Beneath the fragmented departments lies a resilient, multi-contextual elite core. We utilize Multilayer <math id="S1.I1.i4.p1.m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>-core decomposition to isolate this elite core, and the Adjusted Rand Index (ARI) to measure community persistence between the project and co-authorship layers.</p>
+</div>
+</li>
+</ul>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Theoretical Background</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Mathematical Formalism of Multilayer Networks</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p class="ltx_p">Classical graph theory represents a network as a graph <math id="S2.SS1.p1.m1" class="ltx_Math" alttext="G=(V,E)" display="inline"><mrow><mi>G</mi><mo>=</mo><mrow><mo stretchy="false">(</mo><mi>V</mi><mo>,</mo><mi>E</mi><mo stretchy="false">)</mo></mrow></mrow></math>, where <math id="S2.SS1.p1.m2" class="ltx_Math" alttext="V" display="inline"><mi>V</mi></math> denotes the set of nodes and <math id="S2.SS1.p1.m3" class="ltx_Math" alttext="E" display="inline"><mi>E</mi></math> the set of edges connecting them. Such a representation is adequate when only a single type of relation is of interest. However, many empirical systems contain several qualitatively different types of interactions that cannot be reduced to one edge set without losing information. Academic communities are a clear example: the same researchers may be connected through co-authorship, mentorship, project participation, or thematic similarity, and each of these ties reflects a different organizational logic. For such systems, the multilayer formalism provides a more expressive mathematical framework <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p class="ltx_p">In the general formulation of multilayer networks, a system is represented as
+</p>
+<table id="S2.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.Ex1.m1" class="ltx_Math" alttext="M=(V_{M},E_{M},V,\mathbf{L})," display="block"><mrow><mrow><mi>M</mi><mo>=</mo><mrow><mo stretchy="false">(</mo><msub><mi>V</mi><mi>M</mi></msub><mo>,</mo><msub><mi>E</mi><mi>M</mi></msub><mo>,</mo><mi>V</mi><mo>,</mo><mi>𝐋</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">where <math id="S2.SS1.p2.m1" class="ltx_Math" alttext="V" display="inline"><mi>V</mi></math> is the set of physical nodes, <math id="S2.SS1.p2.m2" class="ltx_Math" alttext="\mathbf{L}" display="inline"><mi>𝐋</mi></math> denotes the collection of layers or layer aspects, <math id="S2.SS1.p2.m3" class="ltx_Math" alttext="V_{M}" display="inline"><msub><mi>V</mi><mi>M</mi></msub></math> is the set of node-layer tuples, and <math id="S2.SS1.p2.m4" class="ltx_Math" alttext="E_{M}" display="inline"><msub><mi>E</mi><mi>M</mi></msub></math> is the set of edges defined between these tuples <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. This formalism distinguishes between the physical entity and its manifestation in a particular relational context. In other words, the same researcher may appear simultaneously in a publication layer, a mentorship layer, and a project layer, while remaining one underlying actor in the system.</p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p class="ltx_p">A key conceptual contribution of the multilayer framework is the introduction of <span class="ltx_text ltx_font_italic">aspects</span>. An aspect represents one dimension along which layers are differentiated, such as interaction type, time, space, or institutional context <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. In the present study, the relevant aspect is the type of academic relation. Elementary layers correspond to the individual categories of ties, while layer combinations refer to the structured set of these elementary layers taken together as one multiplex object. This distinction is important because it clarifies that a multilayer network is not simply a collection of separate graphs, but a formally unified system in which relations can be analyzed both within and across layers.</p>
+</div>
+<div id="S2.SS1.p4" class="ltx_para">
+<p class="ltx_p">From a computational perspective, multilayer systems may be represented either in tensor form or in matrix form. Tensor formulations are mathematically elegant because they preserve the full multidimensional structure of the system and are well suited to theoretical derivations <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. In practice, however, many analyses rely on the <span class="ltx_text ltx_font_italic">supra-adjacency matrix</span>, which flattens the layered structure into a larger block matrix whose diagonal blocks encode intra-layer edges and whose off-diagonal blocks encode inter-layer couplings <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>. This matrix-based representation is especially useful for algorithmic implementations of centrality, clustering, and diffusion measures, since it allows multilayer problems to be treated using extended linear-algebraic tools developed for ordinary graphs.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Multiplex Networks and Inter-Layer Couplings</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p class="ltx_p">A particularly important subclass of multilayer systems is the <span class="ltx_text ltx_font_italic">multiplex network</span>. In a multiplex network, the same set of nodes is present across all layers, but the meaning of the edges differs from one layer to another <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>. This makes multiplex networks especially suitable for social and organizational settings, where actors typically remain fixed while the types of relations between them vary. In the present case, the nodes are researchers, while the layers correspond to co-authorship, mentorship, keyword-based similarity, and project co-participation.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p class="ltx_p">The defining intuition behind multiplexity is that different ties are not interchangeable. A co-authorship link does not carry the same sociological meaning as a mentorship relation, and neither should be conflated with administrative co-membership on a funded project. Aggregating all these ties into a single graph may increase apparent density, but it does so at the cost of interpretability and structural precision. Multiplex modeling preserves this relational heterogeneity and therefore permits a more faithful description of institutional structure <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>.</p>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p class="ltx_p">Inter-layer coupling determines how node copies are connected across layers. In static multiplex systems, the most common form is <span class="ltx_text ltx_font_italic">categorical coupling</span>, in which each node is connected to its counterparts across all layers <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. These couplings do not usually represent empirical social ties in their own right; rather, they encode the fact that the same actor participates in several relational contexts simultaneously. This is the standard assumption for most multiplex analyses and underlies the supra-adjacency approach used by many multilayer centrality measures.</p>
+</div>
+<div id="S2.SS2.p4" class="ltx_para">
+<p class="ltx_p">By contrast, <span class="ltx_text ltx_font_italic">ordinal coupling</span> is characteristic of temporal multilayer networks, where a node in one time slice is connected only to itself in adjacent time slices <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>. Ordinal coupling imposes a sequential structure and is useful when the primary question concerns network evolution over time. Although the present study is static rather than temporal, the distinction remains theoretically important because it clarifies that not all multilayer systems are organized in the same way. The categorical coupling used here reflects coexistence of relation types, whereas ordinal coupling reflects temporal succession.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Hypergraphs and Clique Projections</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p class="ltx_p">A further theoretical issue arises from the fact that many academic relations are not naturally dyadic. Standard graphs assume that edges connect exactly two nodes, yet many scholarly activities are inherently group-based. A scientific paper with five co-authors, for example, is more naturally represented as a <span class="ltx_text ltx_font_italic">hyperedge</span> connecting all five actors simultaneously. Hypergraphs generalize ordinary graphs by allowing one edge to join an arbitrary number of nodes <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>.</p>
+</div>
+<div id="S2.SS3.p2" class="ltx_para">
+<p class="ltx_p">This distinction matters because the pairwise graph used in network analysis is often a projection of a richer underlying relational structure. When a multi-author paper is projected into an ordinary co-authorship graph, the hyperedge is transformed into a clique: each pair of co-authors becomes connected by an edge. This projection is convenient and standard, but it also introduces interpretive caution. A dense clique in the projected graph may reflect one collective event rather than many independent pairwise collaborations.</p>
+</div>
+<div id="S2.SS3.p3" class="ltx_para">
+<p class="ltx_p">In multiplex settings, clique projection becomes even more consequential because different layers may originate from different underlying data-generating processes. Co-authorship is projected from group publications, project participation is projected from administrative teams, and semantic similarity is projected from shared keyword profiles rather than direct interaction. The multiplex framework does not eliminate these projection effects, but it makes them easier to reason about by keeping the resulting tie types analytically distinct. For a study of academic organizations, this is preferable to collapsing all projected relations into one monoplex graph, where the difference between collective production, hierarchical supervision, and formal administration would become much harder to interpret <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>]</cite>.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Related Work</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p class="ltx_p">The literature most closely related to this study lies at the intersection of university collaboration research, publication-project comparison studies, and multiplex models of researcher relations. Existing work shows that formal academic units only partially coincide with observed collaboration communities, that project-based and publication-based collaboration reflect different structural regimes, and that multi-relational models can capture institutional structure more adequately than single-layer co-authorship graphs.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib26" title="Comparing university organizational units and scientific co-authorship communities" class="ltx_ref">Obermeier<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib26" title="Comparing university organizational units and scientific co-authorship communities" class="ltx_ref">24</a>]</cite> analyze publication data from University College Dublin and compare formal organizational units with co-authorship communities inferred from an author-publication network. They report that colleges explain relatively little of the observed collaboration structure, while schools provide only a partial fit. The same study also examines brokerage positions across organizational units. <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib25" title="Interdisciplinary patterns of a university: investigating collaboration using co-publication network analysis" class="ltx_ref">Obermeier and Brauckmann</a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib25" title="Interdisciplinary patterns of a university: investigating collaboration using co-publication network analysis" class="ltx_ref">25</a>]</cite> further investigate collaboration patterns at University College Dublin by distinguishing collaboration within schools from collaboration across schools and colleges. Their results show that increases in collaboration are driven largely by intra-school collaboration rather than by strong growth in broader interdisciplinarity. <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib27" title="Do academic laboratories correspond to scientific communities? evidence from a large european university" class="ltx_ref">Levy and Muller</a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib27" title="Do academic laboratories correspond to scientific communities? evidence from a large european university" class="ltx_ref">18</a>]</cite> examine whether academic laboratories correspond to scientific communities and find only partial overlap between formal laboratory boundaries and collaboration structure. <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib32" title="On the relationship between the structural and socioacademic communities of a coauthorship network" class="ltx_ref">Rodriguez and Pepe</a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib32" title="On the relationship between the structural and socioacademic communities of a coauthorship network" class="ltx_ref">28</a>]</cite> similarly show that structurally detected communities and socioacademic groupings do not coincide perfectly in co-authorship networks.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib33" title="Do researchers collaborate in a similar way to publish and to develop projects?" class="ltx_ref">Clemente-Gallardo<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib33" title="Do researchers collaborate in a similar way to publish and to develop projects?" class="ltx_ref">8</a>]</cite> compare publication and project collaboration networks within the University of Zaragoza. They find that although individual productivity displays similar broad scaling behavior in both domains, the two networks differ in higher-order topology: project collaboration is more hierarchical and modular, whereas publication collaboration is more symmetric and outward-looking. <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib34" title="Analysis and visualization of the dynamics of research groups in terms of projects and co-authored publications. a case study of library and information science in argentina" class="ltx_ref">Miguel<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib34" title="Analysis and visualization of the dynamics of research groups in terms of projects and co-authored publications. a case study of library and information science in argentina" class="ltx_ref">20</a>]</cite> analyze the dynamics of funded projects and co-authored publications in library and information science in Argentina. Their study also treats projects and publications as distinct collaborative structures and reports differences in the way research groups evolve across the two domains. <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib35" title="Understanding collaboration patterns on funded research projects: a network analysis" class="ltx_ref">Smith<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib35" title="Understanding collaboration patterns on funded research projects: a network analysis" class="ltx_ref">30</a>]</cite> study collaboration patterns on funded research projects in the UK research system and show that project-based collaboration networks display their own hierarchical and concentration patterns. Taken together, these studies treat funded collaboration and publication collaboration as related but non-equivalent structures.</p>
+</div>
+<div id="S3.p4" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib36" title="Prediction of new scientific collaborations through multiplex networks" class="ltx_ref">Tuninetti<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib36" title="Prediction of new scientific collaborations through multiplex networks" class="ltx_ref">33</a>]</cite> construct a researcher-level multiplex network from co-authorship, citation, and keyword-overlap layers in order to predict future scientific collaborations. They show that citation and keyword layers provide additional predictive information beyond co-authorship alone. More generally, <cite class="ltx_cite ltx_citemacro_citeauthor"><a href="#bib.bib37" title="Emergence of multiplex communities in collaboration networks" class="ltx_ref">Battiston<span class="ltx_text ltx_bib_etal"> et al.</span></a></cite> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib37" title="Emergence of multiplex communities in collaboration networks" class="ltx_ref">3</a>]</cite> show that collaboration communities can emerge differently across layers in multiplex collaboration networks. Their results support the use of layered rather than aggregated representations when different relation types coexist.</p>
+</div>
+<div id="S3.p5" class="ltx_para">
+<p class="ltx_p">The present study combines these lines of work in a single university-focused framework. Like the university collaboration studies, it compares formal academic boundaries with emergent collaboration structure <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib26" title="Comparing university organizational units and scientific co-authorship communities" class="ltx_ref">24</a>, <a href="#bib.bib25" title="Interdisciplinary patterns of a university: investigating collaboration using co-publication network analysis" class="ltx_ref">25</a>]</cite>. Like the publication-project comparison literature, it analyzes whether administrative coordination and scientific output follow the same structural logic <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib33" title="Do researchers collaborate in a similar way to publish and to develop projects?" class="ltx_ref">8</a>, <a href="#bib.bib34" title="Analysis and visualization of the dynamics of research groups in terms of projects and co-authored publications. a case study of library and information science in argentina" class="ltx_ref">20</a>]</cite>. Like the multiplex modeling literature, it represents researchers through several relation types rather than through a single co-authorship graph <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib36" title="Prediction of new scientific collaborations through multiplex networks" class="ltx_ref">33</a>]</cite>. In this sense, the study brings together organizational comparison, collaboration-layer comparison, and multiplex representation within one case of intra-university academic structure.</p>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Analytical Framework and Network Metrics</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p class="ltx_p">To address the research questions, standard graph metrics must be extended from the monoplex setting to the multiplex one. The analytical logic of this study operates on three complementary levels: intra-layer topology, inter-layer reinforcement, and aggregate multiplex dynamics <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib2" title="Multilayer networks in a nutshell" class="ltx_ref">1</a>]</cite>. The first level characterizes each layer as a social structure in its own right. The second examines whether ties in one context are reproduced or reinforced in others. The third asks how node roles and institutional structure change once all layers are analyzed jointly rather than in isolation.</p>
+</div>
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Intra-Layer Topology, Homophily, and Statistical Validation</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p class="ltx_p">The analysis begins by establishing a baseline topological profile for each layer. Standard descriptive quantities such as density, average path length, and the size of the Giant Connected Component (GCC) provide an initial view of whether a layer is sparse or cohesive, fragmented or integrated. These measures are not uniquely multiplex, but they remain essential because they describe the local structural environment within which more advanced cross-layer patterns emerge.</p>
+</div>
+<div id="S4.SS1.p2" class="ltx_para">
+<p class="ltx_p">To quantify institutional siloing, the study measures <span class="ltx_text ltx_font_bold">institutional assortativity</span>, that is, the tendency of researchers to connect preferentially with others from the same faculty. In network terms, this is a form of assortative mixing by categorical attribute, where the relevant attribute is faculty affiliation <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib3" title="Mixing patterns in networks" class="ltx_ref">22</a>]</cite>. A high assortativity value indicates that ties are concentrated within organizational boundaries, whereas lower values suggest more cross-faculty mixing. In the context of academic institutions, this measure provides a compact way to operationalize homophily and to test whether disciplinary or administrative divisions are reflected in the observed network structure.</p>
+</div>
+<div id="S4.SS1.p3" class="ltx_para">
+<p class="ltx_p">Observed assortativity and clustering, however, should not be interpreted in isolation. Some apparent structure may arise mechanically from the degree sequence of the network rather than from a meaningful social process. For this reason, the study employs <span class="ltx_text ltx_font_bold">degree-preserving randomized null models</span>, generated through repeated edge swapping while keeping the exact degree of every node fixed <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib4" title="On the uniform generation of random graphs with prescribed degree sequences" class="ltx_ref">21</a>, <a href="#bib.bib6" title="Switching edges to randomize networks: what goes wrong and how to fix it" class="ltx_ref">7</a>]</cite>. Crucially, for directed relational structures (such as Mentorship), the swapping algorithm is constrained to preserve both the in-degree and out-degree sequences independently. By comparing the empirical network to an ensemble of randomized counterparts, it becomes possible to test whether the observed level of institutional homophily or local closure exceeds what would be expected from degree constraints alone. The resulting Z-scores therefore do not <span class="ltx_text ltx_font_italic">prove</span> a sociological mechanism in a strict causal sense, but they do indicate whether the observed pattern is unlikely to be a trivial consequence of network density or degree heterogeneity <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib4" title="On the uniform generation of random graphs with prescribed degree sequences" class="ltx_ref">21</a>, <a href="#bib.bib6" title="Switching edges to randomize networks: what goes wrong and how to fix it" class="ltx_ref">7</a>]</cite>.</p>
+</div>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Multiplex Edge Overlap and Triadic Closure</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p class="ltx_p">Once each layer has been characterized individually, the next step is to examine the extent to which relations are reinforced across contexts. A central concept here is <span class="ltx_text ltx_font_bold">edge overlap</span>, which measures whether the same pair of actors is connected in more than one layer <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib7" title="Structural measures for multiplex networks" class="ltx_ref">4</a>]</cite>. In substantive terms, overlap captures whether a formal administrative tie is also an organic publication tie, whether mentorship tends to evolve into co-authorship, or whether topical similarity coincides with actual collaboration.</p>
+</div>
+<div id="S4.SS2.p2" class="ltx_para">
+<p class="ltx_p">A simple descriptive way to summarize this phenomenon is through the <span class="ltx_text ltx_font_bold">edge multiplicity distribution</span>, which records the proportion of ties that appear in exactly one, two, or more layers <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib7" title="Structural measures for multiplex networks" class="ltx_ref">4</a>]</cite>. A system in which most ties are layer-specific exhibits strong functional separation between relational contexts, whereas a system with high multiplicity displays greater cross-context reinforcement. To compare individual layers directly, the study also uses <span class="ltx_text ltx_font_bold">Jaccard edge overlap</span>, defined as the size of the intersection of two edge sets divided by the size of their union. This provides an interpretable measure of how strongly two relational dimensions align.</p>
+</div>
+<div id="S4.SS2.p3" class="ltx_para">
+<p class="ltx_p">Beyond pairwise overlap, multiplex systems also allow new forms of closure. In ordinary graphs, transitivity measures whether two neighbors of a node are themselves connected. In multiplex networks, closure may occur across different relational contexts: for example, two researchers may be indirectly linked through a project and a mentorship relation, while closure occurs through later co-authorship or topical similarity. This idea is captured by <span class="ltx_text ltx_font_bold">multiplex triadic closure</span>, which generalizes clustering and transitivity to layered settings <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib7" title="Structural measures for multiplex networks" class="ltx_ref">4</a>, <a href="#bib.bib8" title="Structure of triadic relations in multiplex networks" class="ltx_ref">9</a>]</cite>.</p>
+</div>
+<div id="S4.SS2.p4" class="ltx_para">
+<p class="ltx_p">The importance of this extension is conceptual as well as technical. A triangle confined to one layer indicates closure within a single social logic, whereas a triangle spanning multiple layers indicates that different institutional processes reinforce one another. In this sense, mixed-layer triads can be interpreted as evidence of multi-contextual synergy. They are especially relevant in academic settings, where formal structures, cognitive proximity, and organic collaboration may or may not align. The framework developed for such layered triads shows that closure in multiplex systems is qualitatively richer than in monoplex ones and that aggregation can conceal these distinctions <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib8" title="Structure of triadic relations in multiplex networks" class="ltx_ref">9</a>]</cite>.</p>
+</div>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>Interdisciplinary Brokerage and the Cost of Aggregation</h3>
+
+<div id="S4.SS3.p1" class="ltx_para">
+<p class="ltx_p">A central claim of multiplex network analysis is that aggregation into a single flattened graph can alter the identification of important actors <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="Multilayer networks" class="ltx_ref">17</a>, <a href="#bib.bib10" title="Centrality rankings in multiplex networks" class="ltx_ref">31</a>, <a href="#bib.bib17" title="Ranking in interconnected multilayer networks reveals versatile nodes" class="ltx_ref">10</a>]</cite>. In an academic setting, this matters because prominence in one layer need not imply prominence in another. A researcher may publish less than some peers but still occupy a crucial bridging role by connecting project teams, mentoring junior scholars across units, or linking otherwise distant topical communities. The cost of aggregation is therefore not merely descriptive; it affects substantive conclusions about brokerage, influence, and institutional visibility.</p>
+</div>
+<div id="S4.SS3.p2" class="ltx_para">
+<p class="ltx_p">To quantify this effect, the study compares node rankings obtained from a standard aggregated graph with those obtained from a multilayer random-walk centrality defined on the supra-adjacency representation of the network. Specifically, it computes PageRank <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib12" title="The pagerank citation ranking : bringing order to the web" class="ltx_ref">26</a>]</cite> on the flattened monoplex projection and, separately, PageRank on the multiplex <span class="ltx_text ltx_font_italic">supra-graph</span>, in which each researcher is represented by a node replica in every layer and corresponding replicas are connected through inter-layer couplings <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib17" title="Ranking in interconnected multilayer networks reveals versatile nodes" class="ltx_ref">10</a>, <a href="#bib.bib10" title="Centrality rankings in multiplex networks" class="ltx_ref">31</a>, <a href="#bib.bib11" title="Random walk centrality in interconnected multilayer networks" class="ltx_ref">32</a>]</cite>. In this representation, centrality is not derived from a layer-biasing scheme <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib9" title="Multiplex pagerank" class="ltx_ref">15</a>]</cite>, but from a random walk over the full interconnected multilayer structure. After computing PageRank on the supra-graph, the layer-specific scores are marginalized back to physical nodes to obtain an overall measure of multilayer prominence or versatility.</p>
+</div>
+<div id="S4.SS3.p3" class="ltx_para">
+<p class="ltx_p">The divergence between the monoplex and multilayer rankings is then summarized using <span class="ltx_text ltx_font_bold">Spearman rank correlation</span> <math id="S4.SS3.p3.m1" class="ltx_Math" alttext="(\rho)" display="inline"><mrow><mo stretchy="false">(</mo><mi>ρ</mi><mo stretchy="false">)</mo></mrow></math>. A high correlation would suggest that aggregation preserves the main hierarchy of actors, while a low correlation would indicate substantial information loss and the presence of structurally important roles that become visible only when the layered architecture is retained <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib10" title="Centrality rankings in multiplex networks" class="ltx_ref">31</a>, <a href="#bib.bib11" title="Random walk centrality in interconnected multilayer networks" class="ltx_ref">32</a>]</cite>.
+</p>
+</div>
+<div id="S4.SS3.p4" class="ltx_para">
+<p class="ltx_p">To identify such roles more directly, the analysis uses the <span class="ltx_text ltx_font_bold">participation coefficient</span>, which measures how evenly a node’s ties are distributed across layers <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib7" title="Structural measures for multiplex networks" class="ltx_ref">4</a>]</cite>. Let <math id="S4.SS3.p4.m1" class="ltx_Math" alttext="k_{i}^{[l]}" display="inline"><msubsup><mi>k</mi><mi>i</mi><mrow><mo stretchy="false">[</mo><mi>l</mi><mo stretchy="false">]</mo></mrow></msubsup></math> denote the degree of node <math id="S4.SS3.p4.m2" class="ltx_Math" alttext="i" display="inline"><mi>i</mi></math> in layer <math id="S4.SS3.p4.m3" class="ltx_Math" alttext="l" display="inline"><mi>l</mi></math>, and let <math id="S4.SS3.p4.m4" class="ltx_Math" alttext="o_{i}" display="inline"><msub><mi>o</mi><mi>i</mi></msub></math> denote the overlapping degree, that is, the sum of its degrees across all <math id="S4.SS3.p4.m5" class="ltx_Math" alttext="L" display="inline"><mi>L</mi></math> layers. The participation coefficient is then defined as</p>
+<table id="S4.E1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E1.m1" class="ltx_Math" alttext="P_{i}=1-\sum_{l=1}^{L}\left(\frac{k_{i}^{[l]}}{o_{i}}\right)^{2}." display="block"><mrow><mrow><msub><mi>P</mi><mi>i</mi></msub><mo>=</mo><mrow><mn>1</mn><mo>-</mo><mrow><munderover><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mi>l</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover><msup><mrow><mo>(</mo><mfrac><msubsup><mi>k</mi><mi>i</mi><mrow><mo stretchy="false">[</mo><mi>l</mi><mo stretchy="false">]</mo></mrow></msubsup><msub><mi>o</mi><mi>i</mi></msub></mfrac><mo>)</mo></mrow><mn>2</mn></msup></mrow></mrow></mrow><mo>.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr>
+</table>
+<p class="ltx_p">A high value indicates that the node distributes its ties relatively broadly across multiple contexts, whereas a low value indicates concentration in a single relational domain. In this study, nodes with high participation are interpreted as potential interdisciplinary brokers, because their embeddedness is not confined to only one institutional channel.</p>
+</div>
+<div id="S4.SS3.p5" class="ltx_para">
+<p class="ltx_p">This perspective is complemented by <span class="ltx_text ltx_font_bold">Burt’s constraint</span>, which captures the extent to which a node’s contacts are redundant rather than structurally diverse <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib13" title="Structural holes versus network closure as social capital" class="ltx_ref">6</a>, <a href="#bib.bib14" title="Unpacking burt’s constraint measure" class="ltx_ref">11</a>]</cite>. Low constraint indicates access to structural holes and thus greater brokerage potential, while high constraint suggests that a node is embedded in a closed and redundant neighborhood. Used together, participation coefficient and constraint distinguish between actors who are simply active and actors who genuinely span disconnected parts of the university.</p>
+</div>
+</section>
+<section id="S4.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.4 </span>Core-Periphery Structure and Community Persistence</h3>
+
+<div id="S4.SS4.p1" class="ltx_para">
+<p class="ltx_p">To move from local brokerage to mesoscopic structure, the study examines whether the university contains a stable and densely connected institutional core. In sparse multilayer systems, <span class="ltx_text ltx_font_italic">Mutually Connected Components</span> can be too restrictive, since requiring simultaneous connectedness across all layers often yields unstable or trivial results. Rather than applying a fully multilayer vector-valued core decomposition, the present analysis adopts a more operational approach: it constructs a binary aggregated graph representing the topological union of ties across the multiplex system and then applies the standard monoplex <math id="S4.SS4.p1.m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math><span class="ltx_text ltx_font_bold">-core decomposition</span> to this projection.</p>
+</div>
+<div id="S4.SS4.p2" class="ltx_para">
+<p class="ltx_p">In the single-layer setting, a <math id="S4.SS4.p2.m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>-core is the maximal subgraph in which every node has degree at least <math id="S4.SS4.p2.m2" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>. Applied to the aggregated binary projection, this measure identifies the structurally cohesive backbone of the university: the set of actors who remain embedded after recursively removing nodes with low degree from the overall union of academic relations. In this sense, the resulting core should not be interpreted as a fully multilayer core in the strict formal sense developed in the multilayer literature <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib15" title="Core decomposition in multilayer networks: theory, algorithms, and applications" class="ltx_ref">13</a>]</cite>, but rather as a robust topological approximation of the institution’s embedded center based on the combined relational scaffolding of the network. For interpretive clarity, the results may still be described in terms of an elite core, semi-core, and periphery, provided that this classification is understood as arising from the aggregated structural backbone rather than from a layer-wise vector coreness criterion.</p>
+</div>
+<div id="S4.SS4.p3" class="ltx_para">
+<p class="ltx_p">Finally, the study asks whether formal administrative structures and organic scientific collaboration produce similar mesoscopic partitions. To do so, <span class="ltx_text ltx_font_bold">Louvain community detection</span> is applied independently to the Project and Co-authorship layers <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib144" title="Fast unfolding of communities in large networks" class="ltx_ref">5</a>]</cite>. The similarity between the resulting partitions is then measured using the <span class="ltx_text ltx_font_bold">Adjusted Rand Index (ARI)</span>, which quantifies agreement between two clusterings while correcting for chance <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib16" title="Understanding the adjusted rand index and other partition comparison indices based on counting object pairs" class="ltx_ref">34</a>]</cite>. An ARI close to 1 indicates strong alignment between the two community structures, whereas an ARI near 0 suggests that project-based administrative groupings and publication-based collaboration communities are largely distinct. This provides a direct way to test whether formal funding structures actually organize scientific output, or whether organic research communities remain relatively autonomous from administrative boundaries.</p>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM)</h2>
+
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Data Source and Extraction Architecture</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<p class="ltx_p">The empirical foundation of this study relies on data extracted from two centralized, publicly available Croatian academic registries: <span class="ltx_text ltx_font_bold">CROSBI</span> (Croatian Scientific Bibliography)<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><a href="https://www.croris.hr/crosbi/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.croris.hr/crosbi/</a></span></span></span> and <span class="ltx_text ltx_font_bold">CroRIS</span> (Croatian Research Information System)<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span><a href="https://www.croris.hr/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.croris.hr/</a></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib24" title="Peoplet: exploring organizational structures through social network analysis" class="ltx_ref">19</a>]</cite>. To capture a multi-disciplinary ecosystem, the extraction pipeline was configured to target four distinct faculties at the University of Rijeka: the Faculty of Informatics and Digital Technologies (FIDIT)<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span><a href="https://www.inf.uniri.hr/en/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.inf.uniri.hr/en/</a></span></span></span>, the Faculty of Biotechnology and Drug Development (FABRI)<span id="footnote4" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_tag ltx_tag_note">4</span><a href="https://biotech.uniri.hr/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://biotech.uniri.hr/</a></span></span></span>, the Faculty of Physics (FZF<span id="footnote5" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_tag ltx_tag_note">5</span>Unofficial acronym used in the code implementation. Official acronym is FIZRI.</span></span></span>)<span id="footnote6" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_tag ltx_tag_note">6</span><a href="https://phy.uniri.hr/en/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://phy.uniri.hr/en/</a></span></span></span>, and the Faculty of Mathematics (FM<span id="footnote7" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_tag ltx_tag_note">7</span>Unofficial acronym used in the code implementation.</span></span></span>)<span id="footnote8" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">8</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">8</sup><span class="ltx_tag ltx_tag_note">8</span><a href="https://math.uniri.hr/en/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://math.uniri.hr/en/</a></span></span></span>.
+</p>
+</div>
+<div id="S5.SS1.p2" class="ltx_para">
+<p class="ltx_p">An automated Python pipeline was developed to query the respective REST API endpoints. The CROSBI API provided comprehensive metadata regarding scientific publications, including authorship roles, supervisory relationships, and semantic keywords. Concurrently, the CroRIS Projects API was utilized to extract administrative data on funded research projects, including temporal duration and official project team rosters. By integrating these two distinct data sources, we successfully engineered a four-layer multiplex network encompassing organic scientific output, hierarchical mentorship, cognitive similarity, and formal administrative funding.</p>
+</div>
+<div id="S5.SS1.p3" class="ltx_para">
+<p class="ltx_p">Before constructing the relational multiplex networks, an initial scientometric and bibliometric analysis was conducted on the raw extracted data. The dataset captures collaborative scientific publications (defined as publications with at least two authors/mentors registered in the system), funded research projects, and semantic keywords extracted from publication abstracts and metadata.</p>
+</div>
+<figure id="S5.T1" class="ltx_table">
+<div class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:433.6pt;height:65pt;vertical-align:-0.0pt;"><span class="ltx_transformed_inner" style="transform:translate(-143.2pt,21.5pt) scale(0.602259189745937,0.602259189745937) ;">
+<table class="ltx_tabular ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Institution</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Researchers</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Collab. Pubs</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Pub Timeline (Median)</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Projects</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Avg. Proj Duration</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold">Unique Keywords</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_t">FIDIT</td>
+<td class="ltx_td ltx_align_center ltx_border_t">285</td>
+<td class="ltx_td ltx_align_center ltx_border_t">659</td>
+<td class="ltx_td ltx_align_center ltx_border_t">1990–2026 (2019)</td>
+<td class="ltx_td ltx_align_center ltx_border_t">69</td>
+<td class="ltx_td ltx_align_center ltx_border_t">2.5 yrs</td>
+<td class="ltx_td ltx_align_center ltx_border_t">3016</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left">FABRI</td>
+<td class="ltx_td ltx_align_center">1062</td>
+<td class="ltx_td ltx_align_center">790</td>
+<td class="ltx_td ltx_align_center">1997–2026 (2019)</td>
+<td class="ltx_td ltx_align_center">84</td>
+<td class="ltx_td ltx_align_center">3.3 yrs</td>
+<td class="ltx_td ltx_align_center">3316</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left">FZF</td>
+<td class="ltx_td ltx_align_center">599</td>
+<td class="ltx_td ltx_align_center">947</td>
+<td class="ltx_td ltx_align_center">1983–2026 (2020)</td>
+<td class="ltx_td ltx_align_center">45</td>
+<td class="ltx_td ltx_align_center">3.0 yrs</td>
+<td class="ltx_td ltx_align_center">2786</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left">FM</td>
+<td class="ltx_td ltx_align_center">223</td>
+<td class="ltx_td ltx_align_center">434</td>
+<td class="ltx_td ltx_align_center">2001–2026 (2021)</td>
+<td class="ltx_td ltx_align_center">54</td>
+<td class="ltx_td ltx_align_center">2.5 yrs</td>
+<td class="ltx_td ltx_align_center">1654</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">GLOBAL</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">1884</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">2778</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">1983–2026 (2019)</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">247</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">2.9 yrs</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb ltx_border_t"><span class="ltx_text ltx_font_bold">10271</span></td>
+</tr>
+</tbody>
+</table>
+</span></div>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>Descriptive statistics of the dataset per institution and globally.</figcaption>
+</figure>
+<div id="S5.SS1.p4" class="ltx_para">
+<p class="ltx_p">As detailed in Table <a href="#S5.T1" title="Table 1 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, the dataset exhibits several distinct administrative and bibliometric characteristics. The global network comprises 1,884 unique researchers and 2,778 collaborative publications, spanning over four decades of academic output (1983–2026). Crucially, the mathematical sum of the local institutional publications (<math id="S5.SS1.p4.m1" class="ltx_Math" alttext="659+790+947+434=2830" display="inline"><mrow><mrow><mn>659</mn><mo>+</mo><mn>790</mn><mo>+</mo><mn>947</mn><mo>+</mo><mn>434</mn></mrow><mo>=</mo><mn>2830</mn></mrow></math>) exceeds the global count (<math id="S5.SS1.p4.m2" class="ltx_Math" alttext="2778" display="inline"><mn>2778</mn></math>), and similarly, the sum of local projects (<math id="S5.SS1.p4.m3" class="ltx_Math" alttext="252" display="inline"><mn>252</mn></math>) exceeds the global project count (<math id="S5.SS1.p4.m4" class="ltx_Math" alttext="247" display="inline"><mn>247</mn></math>). This discrepancy mathematically proves the existence of <span class="ltx_text ltx_font_italic">inter-institutional boundary-spanning</span> prior to any complex network analysis; a single publication or project co-managed by researchers from different faculties is counted in both local sub-datasets but properly deduplicated in the global registry. To observe the longitudinal evolution of this academic ecosystem, the temporal distributions of both organic scientific output (Figure <a href="#S5.F1" title="Figure 1 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>) and formal project funding (Figure <a href="#S5.F2" title="Figure 2 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) were plotted from 2005 to 2026.</p>
+</div>
+<div id="S5.SS1.p5" class="ltx_para">
+<p class="ltx_p">As illustrated in Figure <a href="#S5.F1" title="Figure 1 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, the chronological distribution of scientific output displays significant variation in volume across the disciplines. The Faculty of Physics (FZF) historically dominates collaborative publication volume, punctuated by massive spikes in 2021 and 2024. Conversely, the Faculty of Mathematics (FM) exhibits a lower baseline volume, aligning with disciplinary norms of smaller, highly theoretical research teams<span id="footnote9" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">9</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">9</sup><span class="ltx_tag ltx_tag_note">9</span>Note that the Faculty of Mathematics has the smallest number of researchers among the four institutions (Table <a href="#S5.T1" title="Table 1 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>).</span></span></span>. Despite these volume differences, all four faculties display a synchronous upward trajectory accelerating post-2013, reflecting both an actual increase in scientific productivity and the systematic digitization of historical records into the national CROSBI database. (The sharp decline observed in 2026 is an expected artifact of the data collection occurring mid-year).</p>
+</div>
+<div id="S5.SS1.p6" class="ltx_para">
+<p class="ltx_p">A parallel analysis of administrative coordination (Figure <a href="#S5.F2" title="Figure 2 ‣ 5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) reveals the cyclic nature of academic funding. By plotting the volume of <span class="ltx_text ltx_font_italic">active</span> projects per year (accounting for project start and end dates), distinct institutional funding waves emerge. The Faculty of Biotechnology and Drug Development (FABRI) exhibits a massive surge in project acquisition peaking around 2020–2021, indicating heavy utilization of mid-term national or European funding cycles (e.g., EU Structural Funds). Interestingly, all faculties exhibit a sharp, synchronized convergence in project activation around 2024–2025. Most importantly, the project density curves do not perfectly mirror the publication curves. For example, while FZF dominates the publication timeline, FABRI dominates the project timeline for nearly a decade. This temporal misalignment provides early descriptive evidence of the "formal-organic gap" - proving that formal funding density does not linearly equate to publication volume.</p>
+</div>
+<figure id="S5.F1" class="ltx_figure"><img src="figures/Dataset_Pubs_Timeline.png" id="S5.F1.g1" class="ltx_graphics ltx_centering" width="486" height="292" alt="Longitudinal distribution of collaborative scientific publications across the four faculties from 2005 to 2026.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Longitudinal distribution of collaborative scientific publications across the four faculties from 2005 to 2026.</figcaption>
+</figure>
+<figure id="S5.F2" class="ltx_figure"><img src="figures/Dataset_Projs_Timeline.png" id="S5.F2.g1" class="ltx_graphics ltx_centering" width="486" height="292" alt="Density of actively funded research projects over time, illustrating administrative funding cycles across the faculties.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Density of actively funded research projects over time, illustrating administrative funding cycles across the faculties.</figcaption>
+</figure>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.2 </span>Methodological Challenges and Data Cleansing</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p class="ltx_p">Constructing a reliable organizational network from unauthenticated, self-reported public APIs introduces several methodological challenges. To ensure the structural integrity of the multiplex graph, a robust, three-stage data normalization and cleansing pipeline was implemented:</p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<p class="ltx_p">First; <span class="ltx_text ltx_font_bold">Entity Resolution (Identity Disambiguation):</span> The CROSBI API utilizes a <span class="ltx_text ltx_font_typewriter">crorisId</span> for researchers, whereas the CroRIS Projects API relies on a distinct <span class="ltx_text ltx_font_typewriter">persId</span>. Furthermore, external collaborators frequently lack official identifiers in the system. To prevent node duplication, a centralized Node Registry was implemented, utilizing a sanitized, synthetic key (based on standardized surname and name strings) to definitively merge cross-API records into single multiplex nodes.</p>
+</div>
+<div id="S5.SS2.p3" class="ltx_para">
+<p class="ltx_p">Second; <span class="ltx_text ltx_font_bold">Thesis Inflation Filtration:</span> In the CROSBI database, academic theses (bachelor’s, master’s, and doctoral) are registered as publications where the student is the author and the supervisor acts as a co-author. Treating these records as standard scientific co-authorship artificially inflates the density of the collaboration graph. To mitigate this, a filtration heuristic was applied: publications classified as <span class="ltx_text ltx_font_italic">"ocjenski rad"</span> were strictly routed to the directed Mentorship layer, ensuring the Co-authorship layer accurately reflects peer-level scientific production.</p>
+</div>
+<div id="S5.SS2.p4" class="ltx_para">
+<p class="ltx_p">Third; <span class="ltx_text ltx_font_bold">Tiered Affiliation Disambiguation:</span> Because publication metadata often lacks explicit author-to-institution mappings, researchers collaborating across institutional boundaries are susceptible to "affiliation contagion" (e.g., a physicist inheriting an informatics affiliation due to a joint paper). To resolve this, a tiered voting hierarchy was developed. Institutional assignments derived from the CroRIS Projects API were treated as absolute truth, as they are legally bound to employment records. For researchers lacking project data, a majority-voting algorithm was applied to their publication history. Finally, researchers whose resolved affiliations fell outside the four target faculties were strictly categorized as "External" to prevent the artificial inflation of inter-departmental boundary-spanning metrics.</p>
+</div>
+</section>
+<section id="S5.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.3 </span>Definition of the Four Mapped Layers</h3>
+
+<div id="S5.SS3.p1" class="ltx_para">
+<p class="ltx_p">The resulting multiplex network is formally defined across four distinct relational layers:</p>
+<ol id="S5.I1" class="ltx_enumerate">
+<li id="S5.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S5.I1.i1.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_italic">Co-authorship Layer (Organic Output):</span> Undirected edges connecting researchers who co-authored a scientific publication (extracted from CROSBI).</p>
+</div>
+</li>
+<li id="S5.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S5.I1.i2.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_italic">Mentorship Layer (Hierarchical Pipeline):</span> Directed edges representing a supervisor-to-student guidance relationship (extracted from CROSBI).</p>
+</div>
+</li>
+<li id="S5.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S5.I1.i3.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_italic">Research Similarity Layer (Cognitive Overlap):</span> Undirected edges formed by projecting a bipartite author-keyword graph using the Jaccard similarity coefficient (threshold <math id="S5.I1.i3.p1.m1" class="ltx_Math" alttext="\geq 0.025" display="inline"><mrow><mi></mi><mo>≥</mo><mn>0.025</mn></mrow></math>).</p>
+</div>
+</li>
+<li id="S5.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S5.I1.i4.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_italic">Project Co-participation Layer (Formal Administration):</span> Undirected edges representing shared membership on a funded research grant (extracted from CroRIS).</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Results and Discussion</h2>
+
+<section id="S6.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">6.1 </span>RQ1: Structural Topology and Institutional Homophily</h3>
+
+<div id="S6.SS1.p1" class="ltx_para">
+<p class="ltx_p">Standard monoplex representations inherently assume a uniform topological geometry across all relational ties. However, this assumption is often limited when evaluating multi-contextual academic environments, as it conflates hierarchical structures (e.g., mentorship) with peer-to-peer collaborations. To address this, we systematically evaluate the baseline topologies of the four isolated multiplex layers before testing for institutional homophily against degree-preserving randomised null models.</p>
+</div>
+<div id="S6.SS1.p2" class="ltx_para">
+<p class="ltx_p">The empirical topology exhibits distinct architectural variations across the relational contexts. Within the global institutional network, the formal administrative space (Project layer) displays a high density, with a Giant Connected Component (GCC) encompassing <math id="S6.SS1.p2.m1" class="ltx_Math" alttext="98.8\%" display="inline"><mrow><mn>98.8</mn><mo>%</mo></mrow></math> of active nodes. In contrast, the hierarchical pipeline (Mentorship layer) is fundamentally fragmented, yielding a GCC of only <math id="S6.SS1.p2.m2" class="ltx_Math" alttext="10.5\%" display="inline"><mrow><mn>10.5</mn><mo>%</mo></mrow></math>. The Co-authorship and Similarity layers operate as the primary connective structures of the system, maintaining robust integration with GCCs of <math id="S6.SS1.p2.m3" class="ltx_Math" alttext="94.9\%" display="inline"><mrow><mn>94.9</mn><mo>%</mo></mrow></math> and <math id="S6.SS1.p2.m4" class="ltx_Math" alttext="97.9\%" display="inline"><mrow><mn>97.9</mn><mo>%</mo></mrow></math>, respectively.
+</p>
+</div>
+<div id="S6.SS1.p3" class="ltx_para">
+<p class="ltx_p">To determine whether the observed departmental siloing is a genuine sociological boundary or a mechanical artefact of network density, we compare the empirical attribute assortativity against an ensemble of strict, degree-preserving null graphs. As illustrated in Figure <a href="#S6.F3" title="Figure 3 ‣ 6.1 RQ1: Structural Topology and Institutional Homophily ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>, the observed institutional homophily deviates significantly from random chance. Within the global Co-authorship layer, we observe an assortativity coefficient of <math id="S6.SS1.p3.m1" class="ltx_Math" alttext="0.736" display="inline"><mn>0.736</mn></math>, whereas the null models dictate an expected baseline of <math id="S6.SS1.p3.m2" class="ltx_Math" alttext="0.091" display="inline"><mn>0.091</mn></math> (<math id="S6.SS1.p3.m3" class="ltx_Math" alttext="Z=75.3" display="inline"><mrow><mi>Z</mi><mo>=</mo><mn>75.3</mn></mrow></math>). Similarly, the Project layer demonstrates strong boundary preservation, yielding an observed assortativity of <math id="S6.SS1.p3.m4" class="ltx_Math" alttext="0.490" display="inline"><mn>0.490</mn></math> compared to a null baseline of <math id="S6.SS1.p3.m5" class="ltx_Math" alttext="0.039" display="inline"><mn>0.039</mn></math> (<math id="S6.SS1.p3.m6" class="ltx_Math" alttext="Z=66.2" display="inline"><mrow><mi>Z</mi><mo>=</mo><mn>66.2</mn></mrow></math>).</p>
+</div>
+<figure id="S6.F3" class="ltx_figure"><img src="figures/Plot_3_Homophily_Null_Models.png" id="S6.F3.g1" class="ltx_graphics ltx_centering" width="432" height="288" alt="Observed institutional assortativity compared against degree-preserving randomized null models across the four multiplex layers.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Observed institutional assortativity compared against degree-preserving randomized null models across the four multiplex layers.</figcaption>
+</figure>
+<div id="S6.SS1.p4" class="ltx_para">
+<p class="ltx_p">Overall, the results support RQ1, indicating that faculties operate as strictly delineated administrative and cognitive clusters. The computed <math id="S6.SS1.p4.m1" class="ltx_Math" alttext="Z" display="inline"><mi>Z</mi></math>-scores suggest that disciplinary homophily is an active sociological constraint rather than a structural byproduct of degree heterogeneity.</p>
+</div>
+</section>
+<section id="S6.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">6.2 </span>RQ2: Multiplex Edge Overlap and Reinforcement</h3>
+
+<div id="S6.SS2.p1" class="ltx_para">
+<p class="ltx_p">While institutional silos are clearly defined, evaluating whether formal administrative interventions successfully translate into organic scientific output requires an analysis of cross-layer tie reinforcement. Standard evaluation metrics frequently presume a linear transfer of social capital across contexts. To test this assumption, we formulate our analysis around edge multiplicity and Jaccard overlap to isolate the exact translation rate of formal funding into organic publication.</p>
+</div>
+<div id="S6.SS2.p2" class="ltx_para">
+<p class="ltx_p">The distribution of edge multiplicity across the network, detailed in Figure <a href="#S6.F4" title="Figure 4 ‣ 6.2 RQ2: Multiplex Edge Overlap and Reinforcement ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>, highlights a distinct separation between formal and organic interactions. Globally, <math id="S6.SS2.p2.m1" class="ltx_Math" alttext="69.41\%" display="inline"><mrow><mn>69.41</mn><mo>%</mo></mrow></math> of all collaborative pairs exist in exactly one layer, indicating highly specialised interactions. This structural configuration is heavily discipline-dependent: the Faculty of Mathematics (FM) exhibits marked functional separation, with <math id="S6.SS2.p2.m2" class="ltx_Math" alttext="93.51\%" display="inline"><mrow><mn>93.51</mn><mo>%</mo></mrow></math> of ties restricted to a single layer. Conversely, the Faculty of Biotechnology and Drug Development (FABRI) demonstrates a more integrated relational structure, where <math id="S6.SS2.p2.m3" class="ltx_Math" alttext="33.40\%" display="inline"><mrow><mn>33.40</mn><mo>%</mo></mrow></math> of ties span two or more multiplex dimensions. Furthermore, a direct calculation of the global Jaccard edge overlap between the Project and Co-authorship layers yields an intersection of only <math id="S6.SS2.p2.m4" class="ltx_Math" alttext="0.0567" display="inline"><mn>0.0567</mn></math> (<math id="S6.SS2.p2.m5" class="ltx_Math" alttext="5.67\%" display="inline"><mrow><mn>5.67</mn><mo>%</mo></mrow></math>).</p>
+</div>
+<figure id="S6.F4" class="ltx_figure"><img src="figures/Plot_1_Edge_Multiplicity.png" id="S6.F4.g1" class="ltx_graphics ltx_centering" width="432" height="288" alt="Distribution of edge multiplicity across the four faculties, illustrating the robustness of academic ties.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Distribution of edge multiplicity across the four faculties, illustrating the robustness of academic ties.</figcaption>
+</figure>
+<div id="S6.SS2.p3" class="ltx_para">
+<p class="ltx_p">To isolate the specific pathways of social capital translation, we evaluate multiplex triadic closure rates (Figure <a href="#S6.F5" title="Figure 5 ‣ 6.2 RQ2: Multiplex Edge Overlap and Reinforcement ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>). If two researchers share a mutual project neighbour, the probability that they will close the triad via direct Co-authorship is <math id="S6.SS2.p3.m1" class="ltx_Math" alttext="3.71\%" display="inline"><mrow><mn>3.71</mn><mo>%</mo></mrow></math>. However, if we condition this closure on intellectual proximity - where two researchers share a project neighbour and exhibit high semantic Keyword Similarity - the closure rate increases to <math id="S6.SS2.p3.m2" class="ltx_Math" alttext="12.16\%" display="inline"><mrow><mn>12.16</mn><mo>%</mo></mrow></math>.</p>
+</div>
+<figure id="S6.F5" class="ltx_figure"><img src="figures/Plot_5_Triadic_Closure.png" id="S6.F5.g1" class="ltx_graphics ltx_centering" width="432" height="260" alt="Multiplex triadic closure rates testing the pathways of social capital translation across layers.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>Multiplex triadic closure rates testing the pathways of social capital translation across layers.</figcaption>
+</figure>
+<div id="S6.SS2.p4" class="ltx_para">
+<p class="ltx_p">Overall, the results support RQ2, demonstrating that formal administrative collaborations do not strictly dictate organic scientific output. The low structural overlap and conditioned triadic closure rates suggest that top-down funding alone is frequently insufficient to force collaboration; cognitive alignment (topical similarity) appears to act as a necessary catalyst for multi-contextual synergy.</p>
+</div>
+</section>
+<section id="S6.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">6.3 </span>RQ3: Multiplex Centrality and Information Loss</h3>
+
+<div id="S6.SS3.p1" class="ltx_para">
+<p class="ltx_p">Traditional Organizational Network Analysis (ONA) leverages single-layer centrality metrics to categorise institutional importance. However, this monoplex aggregation compresses independent interaction spaces, inherently penalising boundary-spanning actors whose influence is distributed across multiple, sparser layers. To quantify this structural distortion, we calculate the Spearman rank correlation (<math id="S6.SS3.p1.m1" class="ltx_Math" alttext="\rho" display="inline"><mi>ρ</mi></math>) between a standard monoplex PageRank and a random-walk centrality computed over the fully interconnected multiplex supra-adjacency matrix.</p>
+</div>
+<div id="S6.SS3.p2" class="ltx_para">
+<p class="ltx_p">Figure <a href="#S6.F6" title="Figure 6 ‣ 6.3 RQ3: Multiplex Centrality and Information Loss ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a> illustrates the precise information loss (<math id="S6.SS3.p2.m1" class="ltx_Math" alttext="(1-\rho)\times 100" display="inline"><mrow><mrow><mo stretchy="false">(</mo><mrow><mn>1</mn><mo>-</mo><mi>ρ</mi></mrow><mo stretchy="false">)</mo></mrow><mo>×</mo><mn>100</mn></mrow></math>) induced by graph flattening. Globally, aggregating the network introduces an <math id="S6.SS3.p2.m2" class="ltx_Math" alttext="8.0\%" display="inline"><mrow><mn>8.0</mn><mo>%</mo></mrow></math> structural information loss (<math id="S6.SS3.p2.m3" class="ltx_Math" alttext="\rho=0.9198" display="inline"><mrow><mi>ρ</mi><mo>=</mo><mn>0.9198</mn></mrow></math>). Notably, this aggregation cost is distributed asymmetrically across disciplines. While FABRI experiences a minimal <math id="S6.SS3.p2.m4" class="ltx_Math" alttext="7.3\%" display="inline"><mrow><mn>7.3</mn><mo>%</mo></mrow></math> divergence, FM registers a <math id="S6.SS3.p2.m5" class="ltx_Math" alttext="26.4\%" display="inline"><mrow><mn>26.4</mn><mo>%</mo></mrow></math> loss of structural information (<math id="S6.SS3.p2.m6" class="ltx_Math" alttext="\rho=0.7359" display="inline"><mrow><mi>ρ</mi><mo>=</mo><mn>0.7359</mn></mrow></math>). This divergence indicates a monoplex bias against disciplines characterised by smaller, highly specialised collaborative configurations.</p>
+</div>
+<figure id="S6.F6" class="ltx_figure"><img src="figures/Plot_2_Aggregation_Cost.png" id="S6.F6.g1" class="ltx_graphics ltx_centering" width="432" height="271" alt="Information loss (measured via Spearman rank correlation divergence) caused by aggregating multiplex networks into a monoplex graph.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>Information loss (measured via Spearman rank correlation divergence) caused by aggregating multiplex networks into a monoplex graph.</figcaption>
+</figure>
+<div id="S6.SS3.p3" class="ltx_para">
+<p class="ltx_p">By shifting to the multiplex paradigm, we successfully identify interdisciplinary brokers who appear peripheral in raw publication volume but occupy vital institutional positions. Specifically, by optimising for the Participation Coefficient (<math id="S6.SS3.p3.m1" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>) and minimising Burt’s constraint, the supra-adjacency formulation elevates these boundary-spanning actors. For instance, specific researchers within FM (e.g., Researcher DC, exhibiting a remarkably low Burt’s constraint of <math id="S6.SS3.p3.m2" class="ltx_Math" alttext="0.0315" display="inline"><mn>0.0315</mn></math>) and FIDIT (e.g., Researcher AM) are revealed as primary structural-hole spanners. These actors distribute their academic bandwidth evenly across mentoring, project administration, and varied topical themes, thereby bridging disconnected departmental units.</p>
+</div>
+<div id="S6.SS3.p4" class="ltx_para">
+<p class="ltx_p">Overall, the results support RQ3, demonstrating that monoplex aggregation obscures critical hierarchical information. Multiplex centrality provides a more robust mechanism for evaluating researchers who function as the multi-contextual administrative and cognitive bridges within the university.</p>
+</div>
+</section>
+<section id="S6.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">6.4 </span>RQ4: Inter-Institutional Dynamics and Core-Periphery</h3>
+
+<div id="S6.SS4.p1" class="ltx_para">
+<p class="ltx_p">While local boundary-spanners bridge distinct sub-graphs, we must subsequently assess whether formal funding architectures align with the organic, mesoscopic community structure of the university. To evaluate this alignment, we compute the Adjusted Rand Index (ARI) to map the persistence of Louvain communities between the Project and Co-authorship layers, followed by a multilayer <math id="S6.SS4.p1.m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>-core decomposition to isolate the institution’s structural backbone.</p>
+</div>
+<div id="S6.SS4.p2" class="ltx_para">
+<p class="ltx_p">The ARI analysis, visualised in Figure <a href="#S6.F7" title="Figure 7 ‣ 6.4 RQ4: Inter-Institutional Dynamics and Core-Periphery ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a>, reveals substantial disciplinary discrepancies in structural autonomy. The Faculty of Informatics and Digital Technologies (FIDIT) exhibits a moderate persistence score of <math id="S6.SS4.p2.m1" class="ltx_Math" alttext="0.5693" display="inline"><mn>0.5693</mn></math>, suggesting that funded project teams exert a measurable influence on subsequent publication clusters. In contrast, both FM (<math id="S6.SS4.p2.m2" class="ltx_Math" alttext="0.2347" display="inline"><mn>0.2347</mn></math>) and FABRI (<math id="S6.SS4.p2.m3" class="ltx_Math" alttext="0.2784" display="inline"><mn>0.2784</mn></math>) yield low persistence scores. This indicates that their respective academic publishing communities organise largely independently of formal project allocations.</p>
+</div>
+<figure id="S6.F7" class="ltx_figure"><img src="figures/Plot_4_Community_Persistence.png" id="S6.F7.g1" class="ltx_graphics ltx_centering" width="432" height="271" alt="Adjusted Rand Index comparing the alignment of Louvain communities in the Project layer against the Co-authorship layer.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>Adjusted Rand Index comparing the alignment of Louvain communities in the Project layer against the Co-authorship layer.</figcaption>
+</figure>
+<div id="S6.SS4.p3" class="ltx_para">
+<p class="ltx_p">Despite this community-level fragmentation across layers, recursive <math id="S6.SS4.p3.m1" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>-core filtering of the aggregated topological projection identifies a cohesive institutional core. The decomposition isolates an elite core comprising 69 multi-contextually embedded researchers (achieving a maximum threshold of <math id="S6.SS4.p3.m2" class="ltx_Math" alttext="k=68" display="inline"><mrow><mi>k</mi><mo>=</mo><mn>68</mn></mrow></math>). Notably, this core heavily incorporates actors from the natural sciences (FZF and FM). This structural pattern demonstrates that despite variations in edge volume, these researchers form a dense, topologically resilient centre within the broader university ecosystem.</p>
+</div>
+<div id="S6.SS4.p4" class="ltx_para">
+<p class="ltx_p">Overall, the results support RQ4, indicating that formal funding structures do not strictly define publication boundaries. The academic ecosystem exhibits autonomous organic sub-communities that simultaneously intersect to form a stable, multi-disciplinary topological core.</p>
+</div>
+<div id="S6.SS4.p5" class="ltx_para">
+<p class="ltx_p">To bridge the gap between matrix algebra and human interpretability, the study also generated an egocentric 3D visualization using Matplotlib (Figures <a href="#S6.F8" title="Figure 8 ‣ 6.4 RQ4: Inter-Institutional Dynamics and Core-Periphery ‣ 6 Results and Discussion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">8</span></a>–<span class="ltx_ref ltx_missing_label ltx_ref_self">LABEL:fig:ego4</span>). By anchoring researchers to unified 2D coordinates and projecting them across vertically stacked <math id="S6.SS4.p5.m1" class="ltx_Math" alttext="Z" display="inline"><mi>Z</mi></math>-planes representing the four relational contexts, the visualization physically separates the networks. Categorical coupling edges (vertical dashed lines) allow for the immediate visual identification of boundary-spanning actors, proving effective for communicating complex multiplex topologies without the visual distortion inherent in 2D aggregations.</p>
+</div>
+<figure id="S6.F8" class="ltx_figure"><img src="figures/Figure_6.png" id="S6.F8.g1" class="ltx_graphics ltx_centering" width="541" height="352" alt="Egocentric multiplex visualization, example researcher 1 (AP). Each horizontal plane corresponds to one relational layer (Co-authorship, Mentorship, Similarity, Project); vertical dashed lines mark categorical inter-layer couplings for the highlighted ego node.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 8: </span>Egocentric multiplex visualization, example researcher 1 (AP). Each horizontal plane corresponds to one relational layer (Co-authorship, Mentorship, Similarity, Project); vertical dashed lines mark categorical inter-layer couplings for the highlighted ego node.</figcaption>
+</figure>
+</section>
+</section>
+<section id="S7" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">7 </span>Conclusion</h2>
+
+<div id="S7.p1" class="ltx_para">
+<p class="ltx_p">This study supports the view that Organizational Network Analysis benefits from a multiplex treatment when the goal is to capture the real structure of an academic institution <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib24" title="Peoplet: exploring organizational structures through social network analysis" class="ltx_ref">19</a>]</cite>. Reducing a university to a single aggregated publication graph risks penalizing specific disciplines, hiding administrative brokers, and conflating formal funding structures with organic scientific output. Within this single-institution case study, the evidence gathered from the University of Rijeka is consistent with academic interactions being fundamentally multilayered, though replication across other institutions would be needed to establish how general this pattern is.</p>
+</div>
+<div id="S7.p2" class="ltx_para">
+<p class="ltx_p">The findings suggest several practical directions for university administration, offered here as guidance rather than settled prescriptions. Because researchers appear to default toward departmental silos in organic publishing, top-down inter-institutional project grants remain one of the more effective levers available for bridging faculties. Academic evaluation frameworks could additionally benefit from incorporating multiplex centrality measures, such as the Participation Coefficient, to recognize staff whose value lies in connecting otherwise separate parts of the university rather than in raw publication volume alone.</p>
+</div>
+<div id="S7.p3" class="ltx_para">
+<p class="ltx_p">The clearest extension of this pipeline is a temporal one: using ordinal layer couplings to follow the multiplex network across successive time slices instead of treating it as a single static snapshot. The dataset already carries what is needed for this - publication years, project start and end dates, thesis completion dates - and a first, informal look at these fields is suggestive rather than conclusive. For instance, among ties that show up in both the Project and Co-authorship layers, formal funding more often precedes the matching publication than the other way around, and researchers seem to pick up new collaborators faster outside an active funding window than during one. Neither observation has been checked against a null model or corrected for the number of comparisons involved, so they are offered here only as motivation for a proper longitudinal follow-up, ideally combined with network Granger-causality methods <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib41" title="Granger causality: a review and recent advances" class="ltx_ref">29</a>]</cite> and, further down the line, dynamic graph neural networks for forecasting link formation and decay. Separately, linking the pipeline to internal registrar systems (e.g. ISVU) would help recover mentorship records that are under-reported in the public CROSBI/CroRIS data, giving a fuller picture of the university’s hierarchical educational pipeline. A more immediate next step, independent of the temporal extension, is a sensitivity analysis of the keyword-similarity threshold and a larger null-model ensemble for RQ1, both of which would strengthen the statistical claims already made in this paper.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[1]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Aleta and Y. Moreno</span><span class="ltx_text ltx_bib_year"> (2019-03)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Multilayer networks in a nutshell</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Annual Review of Condensed Matter Physics</span> <span class="ltx_text ltx_bib_volume">10</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 45–62</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1947-5462</span>,
+<a href="http://dx.doi.org/10.1146/annurev-conmatphys-031218-013259" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1146/annurev-conmatphys-031218-013259" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p5" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p8" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS1.p4" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS2.p1" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S2.SS2.p2" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S4.p1" title="4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4</span></a>.
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[2]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Bastian, S. Heymann, and M. Jacomy</span><span class="ltx_text ltx_bib_year"> (2009)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Gephi: an open source software for exploring and manipulating networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Proceedings of the International AAAI Conference on Web and Social Media</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://api.semanticscholar.org/CorpusID:15996046" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p2" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[3]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">F. Battiston, J. Iacovacci, V. Nicosia, G. Bianconi, and V. Latora</span><span class="ltx_text ltx_bib_year"> (2016-01)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Emergence of multiplex communities in collaboration networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PLOS ONE</span> <span class="ltx_text ltx_bib_volume">11</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 1–15</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1371/journal.pone.0147451" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1371/journal.pone.0147451" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.p4" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[4]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">F. Battiston, V. Nicosia, and V. Latora</span><span class="ltx_text ltx_bib_year"> (2014-03)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Structural measures for multiplex networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Phys. Rev. E</span> <span class="ltx_text ltx_bib_volume">89</span>, <span class="ltx_text ltx_bib_pages"> pp. 032804</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1103/PhysRevE.89.032804" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://link.aps.org/doi/10.1103/PhysRevE.89.032804" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS2.p1" title="4.2 Multiplex Edge Overlap and Triadic Closure ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.SS2.p2" title="4.2 Multiplex Edge Overlap and Triadic Closure ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.SS2.p3" title="4.2 Multiplex Edge Overlap and Triadic Closure ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.SS3.p4" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib144" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[5]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">V. D. Blondel, J. Guillaume, R. Lambiotte, and E. Lefebvre</span><span class="ltx_text ltx_bib_year"> (2008-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Fast unfolding of communities in large networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Statistical Mechanics: Theory and Experiment</span> <span class="ltx_text ltx_bib_volume">2008</span> (<span class="ltx_text ltx_bib_number">10</span>), <span class="ltx_text ltx_bib_pages"> pp. P10008</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1742-5468</span>,
+<a href="http://dx.doi.org/10.1088/1742-5468/2008/10/P10008" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1088/1742-5468/2008/10/p10008" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS4.p3" title="4.4 Core-Periphery Structure and Community Persistence ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.4</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_incollection">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[6]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">R. S. Burt</span><span class="ltx_text ltx_bib_year"> (2001)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Structural holes versus network closure as social capital</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Social Capital: Theory and Research</span>,  <span class="ltx_text ltx_bib_editor">N. Lin, K. S. Cook, and R. S. Burt (Eds.)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 31–56</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p5" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[7]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">C. J. Carstens and K. J. Horadam</span><span class="ltx_text ltx_bib_year"> (2017-07)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Switching edges to randomize networks: what goes wrong and how to fix it</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Complex Networks</span> <span class="ltx_text ltx_bib_volume">5</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 337–351</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2051-1310</span>,
+<a href="https://dx.doi.org/10.1093/comnet/cnw027" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1093/comnet/cnw027" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<span class="ltx_text ltx_bib_external">https://academic.oup.com/comnet/article-pdf/5/3/337/17654918/cnw027.pdf</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS1.p3" title="4.1 Intra-Layer Topology, Homophily, and Statistical Validation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>.
+</span>
+</li>
+<li id="bib.bib33" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[8]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Clemente-Gallardo, A. Ferrer, D. Íñiguez, A. Rivero, G. Ruiz, and A. Tarancón</span><span class="ltx_text ltx_bib_year"> (2019)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Do researchers collaborate in a similar way to publish and to develop projects?</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Informetrics</span> <span class="ltx_text ltx_bib_volume">13</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 64–77</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1751-1577</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.joi.2018.11.004" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S1751157717304431" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p7" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.p3" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S3.p5" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[9]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">E. Cozzo, M. Kivelä, M. D. Domenico, A. Solé-Ribalta, A. Arenas, S. Gómez, M. A. Porter, and Y. Moreno</span><span class="ltx_text ltx_bib_year"> (2015-07)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Structure of triadic relations in multiplex networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">New Journal of Physics</span> <span class="ltx_text ltx_bib_volume">17</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 073029</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/1367-2630/17/7/073029" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1088/1367-2630/17/7/073029" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS2.p3" title="4.2 Multiplex Edge Overlap and Triadic Closure ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.SS2.p4" title="4.2 Multiplex Edge Overlap and Triadic Closure ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[10]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. De Domenico, A. Solé-Ribalta, E. Omodei, S. Gómez, and A. Arenas</span><span class="ltx_text ltx_bib_year"> (2015-04-23)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Ranking in interconnected multilayer networks reveals versatile nodes</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature Communications</span> <span class="ltx_text ltx_bib_volume">6</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 6868</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2041-1723</span>,
+<a href="https://dx.doi.org/10.1038/ncomms7868" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1038/ncomms7868" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p1" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.SS3.p2" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[11]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. G. Everett and S. P. Borgatti</span><span class="ltx_text ltx_bib_year"> (2020)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Unpacking burt’s constraint measure</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Social Networks</span> <span class="ltx_text ltx_bib_volume">62</span>, <span class="ltx_text ltx_bib_pages"> pp. 50–57</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0378-8733</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.socnet.2020.02.001" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0378873320300101" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p5" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[12]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">T. C. Freeman, S. Horsewell, A. Patir, J. Harling-Lee, T. Regan, B. B. Shih, J. Prendergast, D. A. Hume, and T. Angus</span><span class="ltx_text ltx_bib_year"> (2022-07)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Graphia: a platform for the graph-based visualisation and analysis of high dimensional data</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PLOS Computational Biology</span> <span class="ltx_text ltx_bib_volume">18</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 1–17</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1371/journal.pcbi.1010310" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1371/journal.pcbi.1010310" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p2" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[13]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">E. Galimberti, F. Bonchi, F. Gullo, and T. Lanciano</span><span class="ltx_text ltx_bib_year"> (2020-02)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Core decomposition in multilayer networks: theory, algorithms, and applications</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ACM Trans. Knowl. Discov. Data</span> <span class="ltx_text ltx_bib_volume">14</span> (<span class="ltx_text ltx_bib_number">1</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1556-4681</span>,
+<a href="https://doi.org/10.1145/3369872" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1145/3369872" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS4.p2" title="4.4 Core-Periphery Structure and Community Persistence ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.4</span></a>.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[14]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. A. Hagberg, D. A. Schult, and P. J. Swart</span><span class="ltx_text ltx_bib_year"> (2008)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Exploring network structure, dynamics, and function using networkx</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 7th Python in Science Conference</span>,  <span class="ltx_text ltx_bib_editor">G. Varoquaux, T. Vaught, and J. Millman (Eds.)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Pasadena, CA USA</span>, <span class="ltx_text ltx_bib_pages"> pp. 11 – 15</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[15]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Halu, R. J. Mondragón, P. Panzarasa, and G. Bianconi</span><span class="ltx_text ltx_bib_year"> (2013-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Multiplex pagerank</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PLOS ONE</span> <span class="ltx_text ltx_bib_volume">8</span> (<span class="ltx_text ltx_bib_number">10</span>), <span class="ltx_text ltx_bib_pages"> pp. 1–10</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1371/journal.pone.0078293" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1371/journal.pone.0078293" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p2" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[16]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. D. Hunter</span><span class="ltx_text ltx_bib_year"> (2007)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Matplotlib: a 2d graphics environment</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Computing in Science &amp; Engineering</span> <span class="ltx_text ltx_bib_volume">9</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 90–95</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1109/MCSE.2007.55" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p3" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[17]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Kivelä, A. Arenas, M. Barthelemy, J. P. Gleeson, Y. Moreno, and M. A. Porter</span><span class="ltx_text ltx_bib_year"> (2014-09)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Multilayer networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Complex Networks</span> <span class="ltx_text ltx_bib_volume">2</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 203–271</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2051-1310</span>,
+<a href="https://dx.doi.org/10.1093/comnet/cnu016" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1093/comnet/cnu016" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<span class="ltx_text ltx_bib_external">https://academic.oup.com/comnet/article-pdf/2/3/203/9130906/cnu016.pdf</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p5" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p8" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS1.p2" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS1.p3" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS1.p4" title="2.1 Mathematical Formalism of Multilayer Networks ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS2.p1" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S2.SS2.p2" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S2.SS2.p3" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S2.SS2.p4" title="2.2 Multiplex Networks and Inter-Layer Couplings ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S2.SS3.p1" title="2.3 Hypergraphs and Clique Projections ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>,
+<a href="#S2.SS3.p3" title="2.3 Hypergraphs and Clique Projections ‣ 2 Theoretical Background ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>,
+<a href="#S4.SS3.p1" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.p1" title="4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4</span></a>.
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[18]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">R. Levy and P. Muller</span><span class="ltx_text ltx_bib_year"> (2007)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Do academic laboratories correspond to scientific communities? evidence from a large european university</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Journal of Technology and Globalisation</span> <span class="ltx_text ltx_bib_volume">3</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 56–72</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1504/IJTG.2007.012360" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.inderscienceonline.com/doi/abs/10.1504/IJTG.2007.012360" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<span class="ltx_text ltx_bib_external">https://www.inderscienceonline.com/doi/pdf/10.1504/IJTG.2007.012360</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p2" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[19]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Meštrović, S. Beliga, and D. Pitoski</span><span class="ltx_text ltx_bib_year"> (2025)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Peoplet: exploring organizational structures through social network analysis</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">2025 MIPRO 48th ICT and Electronics Convention</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume"></span>, <span class="ltx_text ltx_bib_pages"> pp. 234–239</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1109/MIPRO65660.2025.11132083" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.SS1.p1" title="5.1 Data Source and Extraction Architecture ‣ 5 Case Study: Academic Multiplex Network of the University of Rijeka (FIDIT, FABRI, FZF, FM) ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§5.1</span></a>,
+<a href="#S7.p1" title="7 Conclusion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§7</span></a>.
+</span>
+</li>
+<li id="bib.bib34" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[20]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. Miguel, Z. Chinchilla-Rodríguez, C. González, and F. de Moya-Anegón</span><span class="ltx_text ltx_bib_year"> (2012)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Analysis and visualization of the dynamics of research groups in terms of projects and co-authored publications. a case study of library and information science in argentina</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Inf. Res.</span> <span class="ltx_text ltx_bib_volume">17</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://api.semanticscholar.org/CorpusID:115294535" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p3" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S3.p5" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[21]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">R. Milo, N. Kashtan, S. Itzkovitz, M. E. J. Newman, and U. Alon</span><span class="ltx_text ltx_bib_year"> (2004)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">On the uniform generation of random graphs with prescribed degree sequences</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">cond-mat/0312028</span>,
+<a href="https://arxiv.org/abs/cond-mat/0312028" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS1.p3" title="4.1 Intra-Layer Topology, Homophily, and Statistical Validation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[22]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. E. J. Newman</span><span class="ltx_text ltx_bib_year"> (2003-02)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Mixing patterns in networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Phys. Rev. E</span> <span class="ltx_text ltx_bib_volume">67</span>, <span class="ltx_text ltx_bib_pages"> pp. 026126</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1103/PhysRevE.67.026126" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://link.aps.org/doi/10.1103/PhysRevE.67.026126" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS1.p2" title="4.1 Intra-Layer Topology, Homophily, and Statistical Validation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[23]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">T. Nurmi, A. Badie-Modiri, C. Coupette, and M. Kivelä</span><span class="ltx_text ltx_bib_year"> (2024)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Pymnet: a python library for multilayer networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Open Source Software</span> <span class="ltx_text ltx_bib_volume">9</span> (<span class="ltx_text ltx_bib_number">99</span>), <span class="ltx_text ltx_bib_pages"> pp. 6930</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.21105/joss.06930" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.21105/joss.06930" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[24]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">U. Obermeier, M. J. Barber, A. Krueger, and H. Brauckmann</span><span class="ltx_text ltx_bib_year"> (2009)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Comparing university organizational units and scientific co-authorship communities</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">0908.4506</span>,
+<a href="https://arxiv.org/abs/0908.4506" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p7" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.p2" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S3.p5" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[25]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">U. Obermeier and H. Brauckmann</span><span class="ltx_text ltx_bib_year"> (2010)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Interdisciplinary patterns of a university: investigating collaboration using co-publication network analysis</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">COLLNET Journal of Scientometrics and Information Management</span> <span class="ltx_text ltx_bib_volume">4</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 29–40</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1080/09737766.2010.10700882" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1080/09737766.2010.10700882" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<span class="ltx_text ltx_bib_external">https://doi.org/10.1080/09737766.2010.10700882</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.p2" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S3.p5" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[26]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">L. Page, S. Brin, R. Motwani, and T. Winograd</span><span class="ltx_text ltx_bib_year"> (1999)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The pagerank citation ranking : bringing order to the web</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">The Web Conference</span>,
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://api.semanticscholar.org/CorpusID:1508503" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p2" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[27]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">G. Perrone, J. Unpingco, and H. Lu</span><span class="ltx_text ltx_bib_year"> (2020)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Network visualizations with pyvis and visjs</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">CoRR</span> <span class="ltx_text ltx_bib_volume">abs/2006.04951</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://arxiv.org/abs/2006.04951" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<span class="ltx_text ltx_bib_external">2006.04951</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p3" title="Appendix A Software Tools Overview ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib32" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[28]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. A. Rodriguez and A. Pepe</span><span class="ltx_text ltx_bib_year"> (2008)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">On the relationship between the structural and socioacademic communities of a coauthorship network</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Informetrics</span> <span class="ltx_text ltx_bib_volume">2</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 195–201</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1751-1577</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.joi.2008.04.002" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S1751157708000230" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p2" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[29]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Shojaie and E. B. Fox</span><span class="ltx_text ltx_bib_year"> (2022)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Granger causality: a review and recent advances</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Annual review of statistics and its application</span> <span class="ltx_text ltx_bib_volume">9</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 289–319</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1146/annurev-statistics-040120-010930" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text issn ltx_bib_external">ISSN 2326-8298</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S7.p3" title="7 Conclusion ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§7</span></a>.
+</span>
+</li>
+<li id="bib.bib35" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[30]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Smith, Y. Sarabi, and D. Christopoulos</span><span class="ltx_text ltx_bib_year"> (2023)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Understanding collaboration patterns on funded research projects: a network analysis</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Network Science</span> <span class="ltx_text ltx_bib_volume">11</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 143–173</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1017/nws.2022.33" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p3" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[31]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Solé-Ribalta, M. De Domenico, S. Gómez, and A. Arenas</span><span class="ltx_text ltx_bib_year"> (2014)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Centrality rankings in multiplex networks</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 2014 ACM Conference on Web Science</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_series">WebSci ’14</span>, <span class="ltx_text ltx_bib_place">New York, NY, USA</span>, <span class="ltx_text ltx_bib_pages"> pp. 149–155</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text isbn ltx_bib_external">ISBN 9781450326223</span>,
+<a href="https://doi.org/10.1145/2615569.2615687" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1145/2615569.2615687" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p1" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.SS3.p2" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.SS3.p3" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[32]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Solé-Ribalta, M. De Domenico, S. Gómez, and A. Arenas</span><span class="ltx_text ltx_bib_year"> (2016)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Random walk centrality in interconnected multilayer networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Physica D: Nonlinear Phenomena</span> <span class="ltx_text ltx_bib_volume">323-324</span>, <span class="ltx_text ltx_bib_pages"> pp. 73–79</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Nonlinear Dynamics on Interconnected Networks</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0167-2789</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.physd.2016.01.002" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0167278916000026" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS3.p2" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.SS3.p3" title="4.3 Interdisciplinary Brokerage and the Cost of Aggregation ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[33]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Tuninetti, A. Aleta, D. Paolotti, Y. Moreno, and M. Starnini</span><span class="ltx_text ltx_bib_year"> (2021-05-13)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Prediction of new scientific collaborations through multiplex networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">EPJ Data Science</span> <span class="ltx_text ltx_bib_volume">10</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 25</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2193-1127</span>,
+<a href="https://dx.doi.org/10.1140/epjds/s13688-021-00282-x" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1140/epjds/s13688-021-00282-x" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p7" title="1 Introduction ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.p4" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S3.p5" title="3 Related Work ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[34]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. J. Warrens and H. van der Hoef</span><span class="ltx_text ltx_bib_year"> (2022-11-01)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Understanding the adjusted rand index and other partition comparison indices based on counting object pairs</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Classification</span> <span class="ltx_text ltx_bib_volume">39</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 487–509</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1432-1343</span>,
+<a href="https://dx.doi.org/10.1007/s00357-022-09413-z" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.1007/s00357-022-09413-z" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS4.p3" title="4.4 Core-Periphery Structure and Community Persistence ‣ 4 Analytical Framework and Network Metrics ‣ OZM Seminar" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.4</span></a>.
+</span>
+</li>
+</ul>
+</section>
+<section id="A1" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix A </span>Software Tools Overview</h2>
+
+<div id="A1.p1" class="ltx_para">
+<p class="ltx_p">The computational backbone of this study is <span class="ltx_text ltx_font_bold">NetworkX<span id="footnote10" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">10</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">10</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">10</span></span><a href="https://github.com/networkx/networkx" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://github.com/networkx/networkx</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib18" title="Exploring network structure, dynamics, and function using networkx" class="ltx_ref">14</a>]</cite>, used for graph construction, centrality computation, community detection, and null-model generation. Where native multiplex support was absent - such as for supra-adjacency matrix construction and topological projection k-core decomposition - custom implementations were built on top of the NetworkX API. A natural direction for future work is migration to <span class="ltx_text ltx_font_bold">pymnet<span id="footnote11" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">11</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">11</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">11</span></span><a href="https://github.com/mnets/pymnet" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://github.com/mnets/pymnet</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib19" title="Pymnet: a python library for multilayer networks" class="ltx_ref">23</a>]</cite>, a Python library providing native data structures for multilayer and multiplex networks, including built-in aggregation, supra-adjacency matrices, and cross-layer clustering coefficients.</p>
+</div>
+<div id="A1.p2" class="ltx_para">
+<p class="ltx_p">Each multiplex layer is automatically exported to GraphML and GEXF for use in dedicated network engineering platforms. <span class="ltx_text ltx_font_bold">Gephi<span id="footnote12" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">12</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">12</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">12</span></span><a href="https://gephi.org/" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://gephi.org/</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib20" title="Gephi: an open source software for exploring and manipulating networks" class="ltx_ref">2</a>]</cite> was used for force-directed layout (ForceAtlas2) and mesoscopic structural inspection of individual layers. For large-scale graph rendering with GPU acceleration, <span class="ltx_text ltx_font_bold">Graphia<span id="footnote13" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">13</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">13</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">13</span></span><a href="https://graphia.app/" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://graphia.app/</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib21" title="Graphia: a platform for the graph-based visualisation and analysis of high dimensional data" class="ltx_ref">12</a>]</cite> provides an efficient alternative to both, with native support for heavily connected networks that would otherwise be prohibitive in Gephi. All tools are limited to two-dimensional rendering and cannot natively represent cross-layer coupling structures.</p>
+</div>
+<div id="A1.p3" class="ltx_para">
+<p class="ltx_p">For browser-based single-layer exploration, <span class="ltx_text ltx_font_bold">PyVis<span id="footnote14" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">14</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">14</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">14</span></span><a href="https://github.com/westhealth/pyvis" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://github.com/westhealth/pyvis</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib23" title="Network visualizations with pyvis and visjs" class="ltx_ref">27</a>]</cite> was used to generate interactive physics-simulated graphs. To faithfully represent the multiplex structure, <span class="ltx_text ltx_font_bold">Matplotlib 3D (Axes3D)<span id="footnote15" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">15</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">15</sup><span class="ltx_tag ltx_tag_note"><span class="ltx_text ltx_font_medium">15</span></span><a href="https://matplotlib.org/" title="" class="ltx_ref ltx_url ltx_font_typewriter ltx_font_medium">https://matplotlib.org/</a></span></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib22" title="Matplotlib: a 2d graphics environment" class="ltx_ref">16</a>]</cite> was used to render egocentric multiplex visualizations: a unified 2D layout is projected across vertical <math id="A1.p3.m1" class="ltx_Math" alttext="Z" display="inline"><mi>Z</mi></math>-planes - one per relational layer - with inter-layer categorical couplings rendered as explicit vertical dashed lines.</p>
+</div>
+</section>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Thu Jul  9 10:46:56 2026 by <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]"></a>
+</div></footer>
+</div>
+</body>
+</html>
