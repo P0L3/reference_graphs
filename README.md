@@ -1,8 +1,12 @@
+
+:exclamation: **Please note that this is a vibe-coding project accompanied by a vibe-paper here**: https://P0L3.github.io/reference_graphs/ . **Every statement is to be taken with a grain of salt :suspect:; still, this is good inspiration for what can be done with multiplex networks.** :exclamation:
+
 # CROSBI Reference Graph — Multiplex Academic Network Analysis
 
 A pipeline for building and visualising **multiplex organisational networks** from Croatian academic data. It pulls publication and project records from the public [CROSBI](https://www.bib.irb.hr/) and [CroRIS](https://www.croris.hr/) APIs, resolves researcher identities across sources, and assembles a four-layer graph that can be explored in 3D, analysed statistically, or exported to Gephi/Cytoscape.
 
 Built around the faculties of the **University of Rijeka** — FIDIT, FABRI, FZF, and FM — but easily extended to any Croatian institution with a CROSBI ID via a single config file (see [Configuration](#configuration) below).
+
 
 ---
 
