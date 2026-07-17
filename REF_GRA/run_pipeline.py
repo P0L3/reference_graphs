@@ -57,14 +57,14 @@ for ds in tqdm(DATASETS, desc="Processing Datasets", unit="dataset", colour="gre
     # 1. Build Graph in RAM (No disk loading overhead!)
     # -----------------------------------------
     try:
-        G_multi = build_multiplex_graph(ds, similarity_threshold=0.025)
+        G_multi = build_multiplex_graph(ds, similarity_threshold=0.025)# , max_authors_per_pub=15)
     except Exception as e:
         manifest_entry.update({"Status": "Failed", "Failed Stage": "build_multiplex_graph", "Error": str(e)})
         manifest_rows.append(manifest_entry)
         print(f"\n[!] '{ds}' failed while building the graph: {e}")
         traceback.print_exc()
         continue
-
+    
     if G_multi is None:
         manifest_entry.update({"Status": "Skipped", "Failed Stage": "build_multiplex_graph",
                                 "Error": "nodes/edges/keywords CSVs not found for this dataset"})

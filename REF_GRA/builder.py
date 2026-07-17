@@ -38,7 +38,8 @@ def build_multiplex_graph(dataset_name, similarity_threshold=0.025, max_authors_
     
     # 5. Drop them from the dataframe
     if len(massive_papers) > 0:
-        # print(f"  [Filter] Removing {len(massive_papers)} hyper-authorship papers (> {max_authors_per_pub} authors).")
+        print(f"  [Filter] Removing {len(massive_papers)} hyper-authorship papers (> {max_authors_per_pub} authors).")
+        print(massive_papers)
         df_edges = df_edges[~df_edges['context'].isin(massive_papers)]
 
 
