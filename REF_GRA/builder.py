@@ -5,8 +5,9 @@ A modularized version of the build_graph_crosbi_data.py script.
 import pandas as pd
 import networkx as nx
 import itertools
+import numpy as np
 
-def build_multiplex_graph(dataset_name, similarity_threshold=0.025):
+def build_multiplex_graph(dataset_name, similarity_threshold=0.025, max_authors_per_pub=20):
     """
     Reads nodes, edges, and keywords for a given dataset name.
     Calculates Jaccard similarity, builds the 4-layer multiplex graph,
@@ -22,6 +23,24 @@ def build_multiplex_graph(dataset_name, similarity_threshold=0.025):
         return None
 
     df_nodes["institution"] = df_nodes["institution"].fillna("Unknown")
+
+    # 1. Isolate co-authorship edges
+    coauth_mask = df_edges['layer'] == 'co-authorship'
+    
+    # 2. Count edges per publication context
+    edge_counts = df_edges[coauth_mask]['context'].value_counts()
+    
+    # 3. Mathematically reverse-engineer author count from edge count (E = N*(N-1)/2)
+    author_counts = (1 + np.sqrt(1 + 8 * edge_counts)) / 2
+    
+    # 4. Identify publications exceeding the threshold
+    massive_papers = author_counts[author_counts > max_authors_per_pub].index
+    
+    # 5. Drop them from the dataframe
+    if len(massive_papers) > 0:
+        # print(f"  [Filter] Removing {len(massive_papers)} hyper-authorship papers (> {max_authors_per_pub} authors).")
+        df_edges = df_edges[~df_edges['context'].isin(massive_papers)]
+
 
     # Generate Research Similarity Edges (Jaccard)
     node_keywords = df_keywords.groupby('node_id')['keyword'].apply(set).to_dict()
